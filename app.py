@@ -60,5 +60,6 @@ def result():
 @app.route('/<path:path>')
 def catch_all(path):
     response = jsonify({"p1score":score[0],"p2score":score[1],"p1moves":list(p1moves),"p2moves":list(p2moves)})
+    print(response)
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
