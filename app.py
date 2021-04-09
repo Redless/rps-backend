@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request
-from multiprocessing import Manager
+from multiprocessing import Manager, Process
 from flask_cors import CORS
 
 app = Flask(__name__, static_folder='app', static_url_path="/app")
@@ -42,6 +42,12 @@ def result():
     received = request.get_json(force=True)
     side = received["side"]
     move = received["move"]
+    p = Process(target=process_new_move, args=(side,move))
+    p.start()
+    p.join()
+    return ": )"
+
+def process_new_move(side,move):
     if not side:
         if not movereceived[side]:
             movereceived[side] = True
@@ -54,7 +60,6 @@ def result():
     if movereceived[0] and movereceived[1]:
         updatescore()
 
-    return ": )"
 
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
