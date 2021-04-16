@@ -17,6 +17,8 @@ rpsdict = {"rock":0,"paper":1,"scissors":2}
 def updatescore():
     global p1score
     global p2score
+    global p1movereceived
+    global p2movereceived
     if len(p1moves) != len(p2moves):
         1/0
     p1move = rpsdict[p1moves[-1]]
