@@ -1,12 +1,11 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+from dex import moves, species
 
 app = Flask(__name__, static_folder='app', static_url_path="/app")
 
 CORS(app)
 
-species = {"Crockodyle":{"atk":100,"dfn":100,"spd":100,"spa":100,"spe":100,"types":["fire"]}}
-moves = {"smack":lambda x,y: x.get_activemon().take_damage(100), "bludgeon":lambda x,y: print(x,"bludgeoned",y)}
 
 class Mon():
 
@@ -63,6 +62,7 @@ class Side():
         return self.team[self.activemon]
 
     def knockout(self):
+        self.room.log(self.get_activemon().get_name()+" fainted!")
         self.activemon = None
         if self.whole_team_KO():
             self.room.finishgame(self)
