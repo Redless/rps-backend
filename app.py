@@ -151,6 +151,9 @@ class Side():
         if self.awaitingrevenge and isMove:
             print("cannot make move while awaiting revenge")
             return False
+        if (not isMove) and (not self.team[choice].is_fainted()):
+            print("cannot switch in a fainted mon")
+            return False
         return True
 
 class Room():
@@ -208,6 +211,8 @@ class Room():
         self.check_for_revenge()
 
     def check_for_revenge(self):
+        if self.winner:
+            return
         if self.p2.awaitingrevenge:
             self.onrevenge = True
             self.p2.await_move()
