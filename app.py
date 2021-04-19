@@ -22,11 +22,7 @@ class Mon():
         self.health = 100
         self.moves = json["moves"]
         self.side = side
-
-    '''{"mons":[
-        {"species":"Crockodyle","nick":"nicholas","atk":0,"spa":0,"dfn":0,"spd":0,"moves":["smack","bludgeon"]},
-        {"species":"Crockodyle","nick":"dave","atk":0,"spa":0,"dfn":0,"spd":0,"moves":["smack","bludgeon"]},
-        ]}'''
+        self.took_direct_damage_this_turn = False
 
     def is_fainted(self):
         return self.health > 0
@@ -41,6 +37,24 @@ class Mon():
         self.health -= damage
         if not self.is_fainted():
             self.side.knockout()
+
+    def turn_ended(self):
+        self.took_direct_damage_this_turn = False
+
+    def took_attack_this_turn(self):
+        return self.took_direct_damage_this_turn
+
+    def took_direct_damage(self):
+        self.took_direct_damage_this_turn = True
+
+    def switched_out(self):
+        self.took_direct_damage_this_turn = False
+
+    def switched_in(self):
+        pass
+
+    def log(self,info):
+        self.side.log(info)
 
 class Side():
 
@@ -127,7 +141,10 @@ class Side():
             self.room.execute_turn()
 
     def get_priority(self):
-        return self.get_activemon().spe + (0 if self.action[0] else 1000)
+        movespeedmod = 0
+        if self.action[0]:
+            movespeedmod = moves[self.get_activemon().moves[self.action[1]]].adjust_priority()
+        return self.get_activemon().spe + (0 if self.action[0] else 3000) + movespeedmod
 
     def execute_action(self,targetside):
         if self.get_activemon() == None:
@@ -140,8 +157,11 @@ class Side():
 
 
     def switchin(self,target):
+        if self.get_activemon():
+            self.get_activemon().switched_out()
         self.activemon = target
-        self.room.log(self.get_activemon().get_name()+" switches in!")
+        self.get_activemon().switched_in()
+        self.log(self.get_activemon().get_name()+" switches in!")
 
     def revengein(self):
         self.awaitingrevenge = False
@@ -149,6 +169,9 @@ class Side():
 
     def has_active_mon(self):
         return self.get_activemon() != None
+
+    def turn_ended(self):
+        self.get_activemon().turn_ended()
 
     def is_move_valid(self,isMove,choice):
         if self.awaitingrevenge and isMove:
@@ -161,6 +184,9 @@ class Side():
             print("cannot switch in currently active mon")
             return False
         return True
+
+    def log(self,info):
+        self.room.log(info)
 
 class Room():
 
@@ -203,8 +229,6 @@ class Room():
             self.onrevenge = False
             self.check_for_revenge()
             return
-        print("executing turn")
-        print(self.turncount)
         p1prio = self.p1.get_priority()
         p2prio = self.p2.get_priority()
         if (self.turncount%2):
@@ -221,7 +245,6 @@ class Room():
         self.check_for_revenge()
 
     def check_for_revenge(self):
-        print("checkpoint 1")
         if self.winner:
             return
         if self.p2.awaitingrevenge:
@@ -230,13 +253,16 @@ class Room():
         if self.p1.awaitingrevenge:
             self.onrevenge = True
             self.p1.await_move()
-        print("checkpoint 2")
         if not self.onrevenge:
             self.turncount += 1
+            self.turn_ended()
             self.p1.await_move()
             self.p2.await_move()
-            print("checkpoint 3")
             self.log("turn: "+str(self.turncount))
+
+    def turn_ended(self):
+        self.p1.turn_ended()
+        self.p2.turn_ended()
 
 
 
@@ -246,8 +272,6 @@ rooms.append(Room())
 @app.route('/', methods = ['POST'])
 def result():
     received = request.get_json(force=True)
-    print("RECEIVED THIS POST REQUEST")
-    print(received)
     side=rooms[0].get_side(received["side"])
     if received["type"] == "team":
         side.load_team(received["mons"])
@@ -279,7 +303,7 @@ def catch_all(path):
     p1side = rooms[0].get_side(False)
     p2side = rooms[0].get_side(True)
     thing = {"fightactive":rooms[0].fight_active(),"p1mon":p1side.get_name_active(),"p2mon":p2side.get_name_active(),"p1health":p1side.get_health_active(),"p2health":p2side.get_health_active(),"p1moves":p1side.get_moves_active(),"p2moves":p2side.get_moves_active(),"p1switches":p1side.get_switches(),"p2switches":p2side.get_switches(),"winner":rooms[0].winner,"log":rooms[0].past}
-    print("sending",thing)
+    #print("sending",thing)
     response = jsonify(thing)
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
