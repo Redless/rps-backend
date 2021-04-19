@@ -65,11 +65,14 @@ class Side():
     def knockout(self):
         self.activemon = None
         if self.whole_team_KO():
-            self.room.finishgame()
+            self.room.finishgame(self)
         self.awaitingrevenge = True
 
     def whole_team_KO(self):
-        return False
+        for mon in self.team:
+            if mon.is_fainted():
+                return False
+        return True
 
     def load_team(self,teamjson):
         if self.hasteam:
@@ -160,7 +163,15 @@ class Room():
         self.p2 = Side()
         self.p1.assign_room(self)
         self.p2.assign_room(self)
+        self.winner = None
 
+    def finishgame(self,loser):
+        if self.winner:
+            return
+        if loser == self.p1:
+            self.winner = "p2"
+        if loser == self.p2:
+            self.winner = "p1"
 
     def get_side(self,isp1):
         return self.p2 if isp1 else self.p1
@@ -248,7 +259,7 @@ def process_new_move(side,move):
 def catch_all(path):
     p1side = rooms[0].get_side(False)
     p2side = rooms[0].get_side(True)
-    thing = {"fightactive":rooms[0].fight_active(),"p1mon":p1side.get_name_active(),"p2mon":p2side.get_name_active(),"p1health":p1side.get_health_active(),"p2health":p2side.get_health_active(),"p1moves":p1side.get_moves_active(),"p2moves":p2side.get_moves_active(),"p1switches":p1side.get_switches(),"p2switches":p2side.get_switches()}
+    thing = {"fightactive":rooms[0].fight_active(),"p1mon":p1side.get_name_active(),"p2mon":p2side.get_name_active(),"p1health":p1side.get_health_active(),"p2health":p2side.get_health_active(),"p1moves":p1side.get_moves_active(),"p2moves":p2side.get_moves_active(),"p1switches":p1side.get_switches(),"p2switches":p2side.get_switches(),"winner":rooms[0].winner}
     print("sending",thing)
     response = jsonify(thing)
     response.headers.add('Access-Control-Allow-Origin', '*')
