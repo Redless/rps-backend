@@ -86,6 +86,8 @@ class Side():
         if self.room.fight_active():
             self.room.get_side(True).await_move()
             self.room.get_side(False).await_move()
+            self.room.log("let the games begin!")
+            self.room.log("turn: 1")
 
     def assign_room(self,room):
         self.room = room
@@ -139,6 +141,7 @@ class Side():
 
     def switchin(self,target):
         self.activemon = target
+        self.room.log(self.get_activemon().get_name()+" switches in!")
 
     def revengein(self):
         self.awaitingrevenge = False
@@ -154,19 +157,26 @@ class Side():
         if (not isMove) and (not self.team[choice].is_fainted()):
             print("cannot switch in a fainted mon")
             return False
+        if (not isMove) and (choice == self.activemon):
+            print("cannot switch in currently active mon")
+            return False
         return True
 
 class Room():
 
     def __init__(self):
         """new room"""
-        self.turncount = 0
+        self.turncount = 1
         self.onrevenge = False
         self.p1 = Side()
         self.p2 = Side()
         self.p1.assign_room(self)
         self.p2.assign_room(self)
         self.winner = None
+        self.past = []
+
+    def log(self,info):
+        self.past.insert(0,info)
 
     def finishgame(self,loser):
         if self.winner:
@@ -211,6 +221,7 @@ class Room():
         self.check_for_revenge()
 
     def check_for_revenge(self):
+        print("checkpoint 1")
         if self.winner:
             return
         if self.p2.awaitingrevenge:
@@ -219,10 +230,13 @@ class Room():
         if self.p1.awaitingrevenge:
             self.onrevenge = True
             self.p1.await_move()
+        print("checkpoint 2")
         if not self.onrevenge:
             self.turncount += 1
             self.p1.await_move()
             self.p2.await_move()
+            print("checkpoint 3")
+            self.log("turn: "+str(self.turncount))
 
 
 
@@ -264,7 +278,7 @@ def process_new_move(side,move):
 def catch_all(path):
     p1side = rooms[0].get_side(False)
     p2side = rooms[0].get_side(True)
-    thing = {"fightactive":rooms[0].fight_active(),"p1mon":p1side.get_name_active(),"p2mon":p2side.get_name_active(),"p1health":p1side.get_health_active(),"p2health":p2side.get_health_active(),"p1moves":p1side.get_moves_active(),"p2moves":p2side.get_moves_active(),"p1switches":p1side.get_switches(),"p2switches":p2side.get_switches(),"winner":rooms[0].winner}
+    thing = {"fightactive":rooms[0].fight_active(),"p1mon":p1side.get_name_active(),"p2mon":p2side.get_name_active(),"p1health":p1side.get_health_active(),"p2health":p2side.get_health_active(),"p1moves":p1side.get_moves_active(),"p2moves":p2side.get_moves_active(),"p1switches":p1side.get_switches(),"p2switches":p2side.get_switches(),"winner":rooms[0].winner,"log":rooms[0].past}
     print("sending",thing)
     response = jsonify(thing)
     response.headers.add('Access-Control-Allow-Origin', '*')
