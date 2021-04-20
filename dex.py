@@ -2,6 +2,8 @@ species = {
         "Crockodyle":{"atk":100,"dfn":100,"spd":100,"spa":100,"spe":100,"types":["fire"]},
         "Puncher":{"atk":150,"dfn":120,"spd":80,"spa":60,"spe":85,"types":["fighting"]},
         "Aggrobull":{"atk":150,"dfn":100,"spd":100,"spa":105,"spe":140,"types":["dragon"]},
+        "Serpyre":{"atk":130,"dfn":80,"spa":130,"spd":80,"spe":120,"types":["fire"]},
+
 }
 
 typekey = {"normal":0,"fighting":1,"flying":2,"rock":3,"steel":4,"dragon":5,"fire":6,"water":7,"grass":8,"psychic":9,"ghost":10,"dark":11}
@@ -48,7 +50,8 @@ def damage_dealing_move(user,target,isSpecial,movetype,movepower,movename):
 
 class Move:
 
-    def __init__(self, usemove, prioritycallback = None):
+    def __init__(self, usemove, movetype, prioritycallback = None):
+        self.movetype = movetype
         self.usemove = usemove
         self.prioritycallback = prioritycallback
 
@@ -61,7 +64,7 @@ class Move:
         return 0
 
 def construct_damaging_move(isSpecial,movetype,BP,name):
-    return Move(lambda x, y: damage_dealing_move(x,y,isSpecial,movetype,BP,name))
+    return Move(lambda x, y: damage_dealing_move(x,y,isSpecial,movetype,BP,name),movetype)
 
 def pilebunker(user,target):
     damage_dealing_move(user,target,False,"fighting",40,"pilebunker")
@@ -103,16 +106,26 @@ def rampage(user,target):
             return True
         user.get_activemon().abouttousemovecallbacks.append(charge_notice)
 
+def retreat(user,target):
+    user.log(user.get_activemon().get_name()+" used retreat!")
+    if user.get_num_living() == 1:
+        user.log("BUT THERE'S NOWHERE LEFT TO RUN")
+        return
+    user.activemon = None
+    user.panicking = True
+    user.await_move()
 
 moves = {
         "facepunch": construct_damaging_move(False,"fighting",25,"facepunch"),
         "falcon punch": construct_damaging_move(False,"fire",20,"falcon punch"),
         "boulder toss": construct_damaging_move(False,"rock",22,"boulder toss"),
         "forbidden shadow assault": construct_damaging_move(False,"dark",20,"forbidden shadow assault"),
-        "pilebunker": Move(pilebunker,prioritycallback=pilebunker_PCB),
+        "pilebunker": Move(pilebunker,"fighting",prioritycallback=pilebunker_PCB),
         "dragon fang": construct_damaging_move(False,"dragon",23,"dragon fang"),
-        "rampage": Move(rampage),
+        "rampage": Move(rampage,"dragon"),
         "fire breath": construct_damaging_move(True,"fire",24,"fire breath"),
         "skydive": construct_damaging_move(False,"flying",20,"skydive"),
+        "smoldering jaws": construct_damaging_move(False,"fire",24,"smoldering jaws"),
+        "retreat": Move(retreat,"normal"),
         }
 

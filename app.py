@@ -75,10 +75,18 @@ class Side():
         self.hasteam = False
         self.awaitingmove = True
         self.awaitingrevenge = False
+        self.panicking = False
         self.action = None
         self.activemon = None
         self.team = None
         self.room = None
+
+    def get_num_living(self):
+        tot = 0
+        for mon in self.team:
+            if mon.is_fainted():
+                tot+=1
+        return tot
 
     def get_activemon(self):
         if not self.hasteam:
@@ -195,6 +203,10 @@ class Side():
         self.awaitingrevenge = False
         self.switchin(self.action[1])
 
+    def panicin(self):
+        self.panicking = False
+        self.switchin(self.action[1])
+
     def has_active_mon(self):
         return self.get_activemon() != None
 
@@ -202,8 +214,8 @@ class Side():
         self.get_activemon().turn_ended()
 
     def is_move_valid(self,isMove,choice):
-        if self.awaitingrevenge and isMove:
-            print("cannot make move while awaiting revenge")
+        if (self.awaitingrevenge or self.panicking) and isMove:
+            print("cannot make move while awaiting revenge or panicking")
             return False
         if (not isMove) and (not self.team[choice].is_fainted()):
             print("cannot switch in a fainted mon")
@@ -228,6 +240,7 @@ class Room():
         self.p2.assign_room(self)
         self.winner = None
         self.past = []
+        self.postpanic = None
 
     def log(self,info):
         self.past.insert(0,info)
@@ -249,6 +262,14 @@ class Room():
     def execute_turn(self):
         if (self.p1.awaitingmove) or (self.p2.awaitingmove):
             return
+        if self.p1.panicking:
+            self.p1.panicin()
+            self.postpanic()
+            return
+        elif self.p2.panicking:
+            self.p2.panicin()
+            self.postpanic()
+            return
         if self.onrevenge:
             if self.p1.awaitingrevenge:
                 self.p1.revengein()
@@ -265,11 +286,37 @@ class Room():
             p2prio += .5
         if p1prio > p2prio:
             self.p1.execute_action(self.p2)
+            if self.p1.panicking:
+                self.postpanic = lambda: self.action_then_finish(self.p2,self.p1)
+                return
             self.p2.execute_action(self.p1)
+            if self.p2.panicking:
+                self.postpanic = lambda: self.finish_turn()
+                return
         else:
             self.p2.execute_action(self.p1)
+            if self.p2.panicking:
+                self.postpanic = lambda: self.action_then_finish(self.p1,self.p2)
+                return
             self.p1.execute_action(self.p2)
+            if self.p1.panicking:
+                self.postpanic = lambda: self.finish_turn()
+                return
 
+        self.finish_turn()
+
+    def action_then_finish(self,actor,target):
+        actor.execute_action(target)
+        if actor.panicking:
+            self.postpanic = lambda: self.finish_turn()
+            return
+        self.finish_turn()
+
+    def pre_revenge_turn_end(self):
+        pass
+
+    def finish_turn(self):
+        self.pre_revenge_turn_end()
         self.check_for_revenge()
 
     def check_for_revenge(self):
