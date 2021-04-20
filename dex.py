@@ -68,14 +68,10 @@ def pilebunker(user,target):
 
 def pilebunker_PCB(user):
     mon = user.get_activemon()
-    mon.log("PBPCB go")
     mon.status.add("focussing")
     def focus_flinch(whatever):
-        mon.log("focus flinch")
-        mon.log(str(mon.status))
         if not ("focussing" in mon.status):
             return
-        mon.log("flinched by move")
         mon.status.add("flinch")
         def flinch():
             if "flinch" in mon.status:
@@ -85,13 +81,10 @@ def pilebunker_PCB(user):
             return False
         mon.abouttousemovecallbacks.append(flinch)
     mon.tookdirectdamagecallbacks.append(focus_flinch)
-    def helpme(x,y):
-        mon.log("here goes nothing")
-        mon.log(str(mon.status))
+    def unfocus(x,y):
         if "focussing" in mon.status:
             mon.status.remove("focussing")
-        mon.log(str(mon.status))
-    mon.turnendcallbacks.append(helpme)
+    mon.turnendcallbacks.append(unfocus)
     return -1000
 
 def rampage(user,target):
@@ -102,9 +95,13 @@ def rampage(user,target):
         user.get_activemon().status.add("recharging")
         def recharge(self,nextturn):
             user.awaitingmove = False
-            nextturn.append(lambda: self.status.remove("recharging"))
+            nextturn.append(lambda x,y: self.status.remove("recharging"))
 
         user.get_activemon().turnendcallbacks.append(recharge)
+        def charge_notice():
+            user.log(user.get_activemon().get_name()+" is recharging!")
+            return True
+        user.get_activemon().abouttousemovecallbacks.append(charge_notice)
 
 
 moves = {

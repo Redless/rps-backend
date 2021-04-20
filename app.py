@@ -44,7 +44,6 @@ class Mon():
             self.side.knockout()
 
     def took_direct_damage(self,dmg):
-        self.log("activatin' direct dmg callbacks")
         for callback in self.tookdirectdamagecallbacks:
             callback(dmg)
         self.tookdirectdamagecallbacks = []
@@ -156,10 +155,11 @@ class Side():
                 return
             self.awaitingmove = False
             self.action = (isMove,choice)
-            if isMove:
-                self.get_activemon().prioritycallbacks.append(lambda x: moves[self.get_activemon().moves[choice]].adjust_priority(self))
-            else:
-                self.get_activemon().prioritycallbacks.append(lambda x: 3000)
+            if self.get_activemon():
+                if isMove:
+                    self.get_activemon().prioritycallbacks.append(lambda x: moves[self.get_activemon().moves[choice]].adjust_priority(self))
+                else:
+                    self.get_activemon().prioritycallbacks.append(lambda x: 3000)
             self.room.execute_turn()
 
     def get_priority(self):
@@ -172,16 +172,11 @@ class Side():
     def execute_action(self,targetside):
         if self.get_activemon() == None:
             return
-        self.log("activatin move use cbs")
         for callback in self.get_activemon().abouttousemovecallbacks:
             if callback():
                 self.get_activemon().abouttousemovecallbacks = []
                 return
         self.get_activemon().abouttousemovecallbacks = []
-        self.log("done.")
-        if "recharging" in self.get_activemon().status:
-            self.log(self.get_activemon().get_name()+" is recharging!")
-            return
         if self.action[0]:
             movefun = moves[self.get_activemon().moves[self.action[1]]]
             movefun(self,targetside)
