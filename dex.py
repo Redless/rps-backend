@@ -1,6 +1,7 @@
 species = {
         "Crockodyle":{"atk":100,"dfn":100,"spd":100,"spa":100,"spe":100,"types":["fire"]},
         "Puncher":{"atk":150,"dfn":120,"spd":80,"spa":60,"spe":85,"types":["fighting"]},
+        "Aggrobull":{"atk":150,"dfn":100,"spd":100,"spa":105,"spe":140,"types":["dragon"]},
 }
 
 typekey = {"normal":0,"fighting":1,"flying":2,"rock":3,"steel":4,"dragon":5,"fire":6,"water":7,"grass":8,"psychic":9,"ghost":10,"dark":11}
@@ -20,6 +21,9 @@ typematchup = [[ 1, 1, 1,.5,.5, 1, 1, 1, 1, 1, 0, 1], #normal #offensive type TH
 def damage_dealing_move(user,target,isSpecial,movetype,movepower,movename):
     user = user.get_activemon()
     target = target.get_activemon()
+    if not (user and target):
+        print("user or target is KOd so damaging move failed")
+        return
     user.side.room.log(user.get_name()+" used "+movename+"!")
     typeAdv = 1
     for x in target.types:
@@ -65,11 +69,28 @@ def pilebunker(user,target):
     else:
         damage_dealing_move(user,target,False,"fighting",40,"pilebunker")
 
+def rampage(user,target):
+    victim = target.get_activemon()
+    damage_dealing_move(user,target,False,"dragon",38,"rampage")
+    if victim.is_fainted():
+        victim.log(user.get_activemon().get_name()+" is tired out from its rampage!")
+        user.get_activemon().status.add("recharging")
+        def recharge(self,nextturn):
+            user.awaitingmove = False
+            nextturn.append(lambda: self.status.remove("recharging"))
+
+        user.get_activemon().turnendcallbacks.append(recharge)
+
+
 moves = {
         "facepunch": construct_damaging_move(False,"fighting",25,"facepunch"),
         "falcon punch": construct_damaging_move(False,"fire",20,"falcon punch"),
         "boulder toss": construct_damaging_move(False,"rock",22,"boulder toss"),
         "forbidden shadow assault": construct_damaging_move(False,"dark",20,"forbidden shadow assault"),
         "pilebunker": Move(pilebunker,prioritycallback=lambda: -1000),
+        "dragon fang": construct_damaging_move(False,"dragon",23,"dragon fang"),
+        "rampage": Move(rampage),
+        "fire breath": construct_damaging_move(True,"fire",24,"fire breath"),
+        "skydive": construct_damaging_move(False,"flying",20,"skydive"),
         }
 

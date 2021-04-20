@@ -23,6 +23,8 @@ class Mon():
         self.moves = json["moves"]
         self.side = side
         self.took_direct_damage_this_turn = False
+        self.status = {"happy",}
+        self.turnendcallbacks = []
 
     def is_fainted(self):
         return self.health > 0
@@ -39,7 +41,12 @@ class Mon():
             self.side.knockout()
 
     def turn_ended(self):
+        nextturnendcallbacks = []
+        for callback in self.turnendcallbacks:
+            callback(self,nextturnendcallbacks)
         self.took_direct_damage_this_turn = False
+        self.turnendcallbacks = nextturnendcallbacks
+
 
     def took_attack_this_turn(self):
         return self.took_direct_damage_this_turn
@@ -114,6 +121,11 @@ class Side():
             return None
         return self.get_activemon().get_name()
 
+    def get_status_active(self):
+        if self.get_activemon() == None:
+            return []
+        return list(self.get_activemon().status)
+
     def get_health_active(self):
         if self.get_activemon() == None:
             return None
@@ -148,6 +160,9 @@ class Side():
 
     def execute_action(self,targetside):
         if self.get_activemon() == None:
+            return
+        if "recharging" in self.get_activemon().status:
+            self.log(self.get_activemon().get_name()+" is recharging!")
             return
         if self.action[0]:
             movefun = moves[self.get_activemon().moves[self.action[1]]]
@@ -255,9 +270,9 @@ class Room():
             self.p1.await_move()
         if not self.onrevenge:
             self.turncount += 1
-            self.turn_ended()
             self.p1.await_move()
             self.p2.await_move()
+            self.turn_ended()
             self.log("turn: "+str(self.turncount))
 
     def turn_ended(self):
@@ -302,8 +317,8 @@ def process_new_move(side,move):
 def catch_all(path):
     p1side = rooms[0].get_side(False)
     p2side = rooms[0].get_side(True)
-    thing = {"fightactive":rooms[0].fight_active(),"p1mon":p1side.get_name_active(),"p2mon":p2side.get_name_active(),"p1health":p1side.get_health_active(),"p2health":p2side.get_health_active(),"p1moves":p1side.get_moves_active(),"p2moves":p2side.get_moves_active(),"p1switches":p1side.get_switches(),"p2switches":p2side.get_switches(),"winner":rooms[0].winner,"log":rooms[0].past}
-    #print("sending",thing)
+    thing = {"fightactive":rooms[0].fight_active(),"p1mon":p1side.get_name_active(),"p2mon":p2side.get_name_active(),"p1health":p1side.get_health_active(),"p2health":p2side.get_health_active(),"p1moves":p1side.get_moves_active(),"p2moves":p2side.get_moves_active(),"p1switches":p1side.get_switches(),"p2switches":p2side.get_switches(),"winner":rooms[0].winner,"log":rooms[0].past,"p1status":p1side.get_status_active(),"p2status":p2side.get_status_active()}
+    print("sending",thing)
     response = jsonify(thing)
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
