@@ -42,7 +42,7 @@ def damage_dealing_move(user,target,isSpecial,movetype,movepower,movename):
     else:
         damage = max(int(user.atk*movepower*typeAdv/target.dfn),1)
     user.side.room.log(target.get_name()+" took "+str(damage)+" percent!")
-    target.took_direct_damage()
+    target.took_direct_damage(damage)
     target.take_damage(damage)
     return damage
 
@@ -55,19 +55,44 @@ class Move:
     def __call__(self,user,target):
         self.usemove(user,target)
 
-    def adjust_priority(self):
+    def adjust_priority(self,user):
         if self.prioritycallback:
-            return self.prioritycallback()
+            return self.prioritycallback(user)
         return 0
 
 def construct_damaging_move(isSpecial,movetype,BP,name):
     return Move(lambda x, y: damage_dealing_move(x,y,isSpecial,movetype,BP,name))
 
 def pilebunker(user,target):
-    if user.get_activemon().took_attack_this_turn():
-        user.room.log(user.get_activemon().get_name()+" flinched!")
-    else:
-        damage_dealing_move(user,target,False,"fighting",40,"pilebunker")
+    damage_dealing_move(user,target,False,"fighting",40,"pilebunker")
+
+def pilebunker_PCB(user):
+    mon = user.get_activemon()
+    mon.log("PBPCB go")
+    mon.status.add("focussing")
+    def focus_flinch(whatever):
+        mon.log("focus flinch")
+        mon.log(str(mon.status))
+        if not ("focussing" in mon.status):
+            return
+        mon.log("flinched by move")
+        mon.status.add("flinch")
+        def flinch():
+            if "flinch" in mon.status:
+                mon.status.remove("flinch")
+                mon.log(mon.get_name()+" flinched!")
+                return True
+            return False
+        mon.abouttousemovecallbacks.append(flinch)
+    mon.tookdirectdamagecallbacks.append(focus_flinch)
+    def helpme(x,y):
+        mon.log("here goes nothing")
+        mon.log(str(mon.status))
+        if "focussing" in mon.status:
+            mon.status.remove("focussing")
+        mon.log(str(mon.status))
+    mon.turnendcallbacks.append(helpme)
+    return -1000
 
 def rampage(user,target):
     victim = target.get_activemon()
@@ -87,7 +112,7 @@ moves = {
         "falcon punch": construct_damaging_move(False,"fire",20,"falcon punch"),
         "boulder toss": construct_damaging_move(False,"rock",22,"boulder toss"),
         "forbidden shadow assault": construct_damaging_move(False,"dark",20,"forbidden shadow assault"),
-        "pilebunker": Move(pilebunker,prioritycallback=lambda: -1000),
+        "pilebunker": Move(pilebunker,prioritycallback=pilebunker_PCB),
         "dragon fang": construct_damaging_move(False,"dragon",23,"dragon fang"),
         "rampage": Move(rampage),
         "fire breath": construct_damaging_move(True,"fire",24,"fire breath"),

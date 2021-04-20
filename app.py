@@ -23,8 +23,11 @@ class Mon():
         self.moves = json["moves"]
         self.side = side
         self.took_direct_damage_this_turn = False
-        self.status = {"happy",}
+        self.status = set()
         self.turnendcallbacks = []
+        self.tookdirectdamagecallbacks = []
+        self.abouttousemovecallbacks = []
+        self.prioritycallbacks = []
 
     def is_fainted(self):
         return self.health > 0
@@ -40,6 +43,12 @@ class Mon():
         if not self.is_fainted():
             self.side.knockout()
 
+    def took_direct_damage(self,dmg):
+        self.log("activatin' direct dmg callbacks")
+        for callback in self.tookdirectdamagecallbacks:
+            callback(dmg)
+        self.tookdirectdamagecallbacks = []
+
     def turn_ended(self):
         nextturnendcallbacks = []
         for callback in self.turnendcallbacks:
@@ -50,9 +59,6 @@ class Mon():
 
     def took_attack_this_turn(self):
         return self.took_direct_damage_this_turn
-
-    def took_direct_damage(self):
-        self.took_direct_damage_this_turn = True
 
     def switched_out(self):
         self.took_direct_damage_this_turn = False
@@ -150,17 +156,29 @@ class Side():
                 return
             self.awaitingmove = False
             self.action = (isMove,choice)
+            if isMove:
+                self.get_activemon().prioritycallbacks.append(lambda x: moves[self.get_activemon().moves[choice]].adjust_priority(self))
+            else:
+                self.get_activemon().prioritycallbacks.append(lambda x: 3000)
             self.room.execute_turn()
 
     def get_priority(self):
         movespeedmod = 0
-        if self.action[0]:
-            movespeedmod = moves[self.get_activemon().moves[self.action[1]]].adjust_priority()
-        return self.get_activemon().spe + (0 if self.action[0] else 3000) + movespeedmod
+        for callback in self.get_activemon().prioritycallbacks:
+            movespeedmod += callback(self.get_activemon())
+        self.get_activemon().prioritycallbacks = []
+        return self.get_activemon().spe + movespeedmod
 
     def execute_action(self,targetside):
         if self.get_activemon() == None:
             return
+        self.log("activatin move use cbs")
+        for callback in self.get_activemon().abouttousemovecallbacks:
+            if callback():
+                self.get_activemon().abouttousemovecallbacks = []
+                return
+        self.get_activemon().abouttousemovecallbacks = []
+        self.log("done.")
         if "recharging" in self.get_activemon().status:
             self.log(self.get_activemon().get_name()+" is recharging!")
             return
@@ -318,7 +336,7 @@ def catch_all(path):
     p1side = rooms[0].get_side(False)
     p2side = rooms[0].get_side(True)
     thing = {"fightactive":rooms[0].fight_active(),"p1mon":p1side.get_name_active(),"p2mon":p2side.get_name_active(),"p1health":p1side.get_health_active(),"p2health":p2side.get_health_active(),"p1moves":p1side.get_moves_active(),"p2moves":p2side.get_moves_active(),"p1switches":p1side.get_switches(),"p2switches":p2side.get_switches(),"winner":rooms[0].winner,"log":rooms[0].past,"p1status":p1side.get_status_active(),"p2status":p2side.get_status_active()}
-    print("sending",thing)
+    #print("sending",thing)
     response = jsonify(thing)
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
