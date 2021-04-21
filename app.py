@@ -26,13 +26,13 @@ class Mon():
         self.prioritycallbacks = []
 
     def get_all_status_str(self):
-        return [i.get_str() for i in self.status]
+        return [i.get_str() for i in self.status[::-1]]
 
     def is_fainted(self):
         return self.health > 0
 
     def add_status(self,status):
-        self.status.append(status)
+        self.status.insert(0,status)
 
     def remove_status(self,status):
         if status in self.status:

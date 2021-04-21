@@ -4,6 +4,7 @@ species = {
         "Serpyre":{"atk":130,"dfn":80,"spa":130,"spd":80,"spe":120,"types":["fire"]},
         "Wavoracle":{"atk":70,"dfn":120,"spa":110,"spd":130,"spe":90,"types":["water"]},
         "Falcoren":{"atk":135,"dfn":100,"spa":70,"spd":70,"spe":145,"types":["flying"]},
+        "Hysteridoll":{"atk":100,"dfn":100,"spa":110,"spd":135,"spe":70,"types":["psychic"]},
 
 }
 
@@ -24,12 +25,12 @@ typematchup = [[ 1, 1, 1,.5,.5, 1, 1, 1, 1, 1, 0, 1], #normal #offensive type TH
 def damage_dealing_move(user,target,isSpecial,movetype,movepower,movename):
     user = user.get_activemon()
     target = target.get_activemon()
-    if not (user and target):
-        print("user or target is KOd so damaging move failed")
-        return
+    user.side.room.log(user.get_name()+" used "+movename+"!")
+    if not target:
+        user.log("But there was no target...")
+        return 0
     dmgmod = user.damage_calc_inflict()
     dmgmod *= target.damage_calc_receive()
-    user.side.room.log(user.get_name()+" used "+movename+"!")
     typeAdv = 1
     for x in target.types:
         typeAdv *= typematchup[typekey[movetype]][typekey[x]]
@@ -256,6 +257,28 @@ def recklessdescent(user,target):
         user.log(user.get_activemon().get_name()+" took "+str(recoil)+" percent recoil!")
         user.get_activemon().take_damage(recoil)
 
+def brainwash(user,target):
+    user.log(user.get_activemon().get_name()+" used brainwash!")
+    target = target.get_activemon()
+    if not target:
+        return
+    user.log(target.get_name()+" was brainwashed!")
+    class BrainwashStatus(Status):
+        def __init__(self,mon):
+            Status.__init__(self,mon,"brainwashed")
+            self.oldtypes = mon.types
+            mon.types = ["psychic"]
+        def remove(self):
+            Status.remove(self)
+            self.mon.types = self.oldtypes
+    target.add_status(BrainwashStatus(target))
+
+def resonate(user,target):
+    if "psychic" in target.get_activemon().types:
+        damage_dealing_move(user,target,True,"psychic",72,"resonate")
+    else:
+        damage_dealing_move(user,target,True,"psychic",18,"resonate")
+
 def rivalry(user,target):
     user.log(user.get_activemon().get_name()+" used rivalry!")
     for status in user.get_activemon().status:
@@ -298,5 +321,7 @@ moves = {
         "mind break": construct_damaging_move(True,"psychic",22,"mind break"),
         "reckless descent": Move(recklessdescent,"flying"),
         "rivalry": Move(rivalry,"dark"),
+        "brainwash": Move(brainwash,"psychic"),
+        "resonate": Move(resonate,"psychic"),
         }
 
