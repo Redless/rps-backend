@@ -22,15 +22,21 @@ class Mon():
         self.health = 100
         self.moves = json["moves"]
         self.side = side
-        self.took_direct_damage_this_turn = False
-        self.status = set()
-        self.turnendcallbacks = []
-        self.tookdirectdamagecallbacks = []
-        self.abouttousemovecallbacks = []
+        self.status = []
         self.prioritycallbacks = []
+
+    def get_all_status_str(self):
+        return [i.get_str() for i in self.status]
 
     def is_fainted(self):
         return self.health > 0
+
+    def add_status(self,status):
+        self.status.append(status)
+
+    def remove_status(self,status):
+        if status in self.status:
+            self.status.remove(status)
 
     def get_name(self):
         return self.nick+"("+self.speciesname+")"
@@ -44,23 +50,18 @@ class Mon():
             self.side.knockout()
 
     def took_direct_damage(self,dmg):
-        for callback in self.tookdirectdamagecallbacks:
-            callback(dmg)
-        self.tookdirectdamagecallbacks = []
+        tookdirectdamagecallbacks = [i for i in self.status]
+        for callback in tookdirectdamagecallbacks:
+            callback.tookdirectdamagecallback()
 
     def turn_ended(self):
-        nextturnendcallbacks = []
-        for callback in self.turnendcallbacks:
-            callback(self,nextturnendcallbacks)
-        self.took_direct_damage_this_turn = False
-        self.turnendcallbacks = nextturnendcallbacks
+        turnendcallbacks = [i for i in self.status]
+        for callback in turnendcallbacks:
+            callback.turnendcallback()
 
-
-    def took_attack_this_turn(self):
-        return self.took_direct_damage_this_turn
 
     def switched_out(self):
-        self.took_direct_damage_this_turn = False
+        pass
 
     def switched_in(self):
         pass
@@ -137,7 +138,7 @@ class Side():
     def get_status_active(self):
         if self.get_activemon() == None:
             return []
-        return list(self.get_activemon().status)
+        return self.get_activemon().get_all_status_str()
 
     def get_health_active(self):
         if self.get_activemon() == None:
@@ -174,17 +175,20 @@ class Side():
         movespeedmod = 0
         for callback in self.get_activemon().prioritycallbacks:
             movespeedmod += callback(self.get_activemon())
+        for callback in [i for i in self.get_activemon().status]:
+            movespeedmod += callback.prioritycallback()
         self.get_activemon().prioritycallbacks = []
         return self.get_activemon().spe + movespeedmod
 
     def execute_action(self,targetside):
         if self.get_activemon() == None:
             return
-        for callback in self.get_activemon().abouttousemovecallbacks:
-            if callback():
-                self.get_activemon().abouttousemovecallbacks = []
-                return
-        self.get_activemon().abouttousemovecallbacks = []
+        abouttousemovecallbacks = [i for i in self.get_activemon().status]
+        canusemove = True
+        for callback in abouttousemovecallbacks:
+            canusemove = canusemove and (not callback.abouttousemovecallback())
+        if not canusemove:
+            return
         if self.action[0]:
             movefun = moves[self.get_activemon().moves[self.action[1]]]
             movefun(self,targetside)

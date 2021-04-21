@@ -63,6 +63,30 @@ class Move:
             return self.prioritycallback(user)
         return 0
 
+class Status:
+
+    def __init__(self,mon,name):
+        self.name = name
+        self.mon = mon
+
+    def get_str(self):
+        return self.name
+
+    def turnendcallback(self):
+        pass
+
+    def remove(self):
+        self.mon.remove_status(self)
+
+    def tookdirectdamagecallback(self):
+        pass
+
+    def abouttousemovecallback(self):
+        return False # if it returns true, prevents them from using a move
+
+    def prioritycallback(self):
+        return 0 #add speed to user
+
 def construct_damaging_move(isSpecial,movetype,BP,name):
     return Move(lambda x, y: damage_dealing_move(x,y,isSpecial,movetype,BP,name),movetype)
 
@@ -71,23 +95,19 @@ def pilebunker(user,target):
 
 def pilebunker_PCB(user):
     mon = user.get_activemon()
-    mon.status.add("focussing")
-    def focus_flinch(whatever):
-        if not ("focussing" in mon.status):
-            return
-        mon.status.add("flinch")
-        def flinch():
-            if "flinch" in mon.status:
-                mon.status.remove("flinch")
-                mon.log(mon.get_name()+" flinched!")
-                return True
-            return False
-        mon.abouttousemovecallbacks.append(flinch)
-    mon.tookdirectdamagecallbacks.append(focus_flinch)
-    def unfocus(x,y):
-        if "focussing" in mon.status:
-            mon.status.remove("focussing")
-    mon.turnendcallbacks.append(unfocus)
+    class FocusStatus(Status):
+        def turnendcallback(self):
+            self.remove()
+        def tookdirectdamagecallback(self):
+            class FlinchStatus(Status):
+                def turnendcallback(self):
+                    self.remove()
+                def abouttousemovecallback(self):
+                    self.mon.log(self.mon.get_name()+" flinched!")
+                    return True
+            self.mon.add_status(FlinchStatus(self.mon,"flinching"))
+    mon.add_status(FocusStatus(mon,"focussing"))
+    mon.log(mon.get_name()+" gets an evil glint in its eye")
     return -1000
 
 def rampage(user,target):
@@ -95,16 +115,20 @@ def rampage(user,target):
     damage_dealing_move(user,target,False,"dragon",38,"rampage")
     if victim.is_fainted():
         victim.log(user.get_activemon().get_name()+" is tired out from its rampage!")
-        user.get_activemon().status.add("recharging")
-        def recharge(self,nextturn):
-            user.awaitingmove = False
-            nextturn.append(lambda x,y: self.status.remove("recharging"))
-
-        user.get_activemon().turnendcallbacks.append(recharge)
-        def charge_notice():
-            user.log(user.get_activemon().get_name()+" is recharging!")
-            return True
-        user.get_activemon().abouttousemovecallbacks.append(charge_notice)
+        class RechargeStatus(Status):
+            def __init__(self,mon):
+                Status.__init__(self,mon,"recharging")
+                self.turnUsed = False
+            def turnendcallback(self):
+                if self.turnUsed:
+                    self.remove()
+                else:
+                    self.turnUsed = True
+                    self.mon.side.awaitingmove = False
+            def abouttousemovecallback(self):
+                self.mon.log(self.mon.get_name()+" is recharging!")
+                return True
+        user.get_activemon().add_status(RechargeStatus(user.get_activemon()))
 
 def retreat(user,target):
     user.log(user.get_activemon().get_name()+" used retreat!")
