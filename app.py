@@ -144,6 +144,7 @@ class Side():
         self.team = None
         self.room = None
         self.fieldeffects = []
+        self.otherside = None
 
     def add_effect(self,effect):
         self.fieldeffects.append(effect)
@@ -207,7 +208,10 @@ class Side():
         return self.get_activemon().get_name()
 
     def get_status_active(self):
-        out = [i.get_str() for i in self.fieldeffects]
+        out = []
+        for i in self.fieldeffects:
+            if i.get_visible():
+                out.append(i.get_str())
         if self.get_activemon() == None:
             return out
         return out + self.get_activemon().get_all_status_str()
@@ -267,10 +271,16 @@ class Side():
         else:
             self.switchin(self.action[1])
 
+    def switched_out(self):
+        for callback in [i for i in self.fieldeffects]:
+            callback.switchedoutcallback()
+        if self.get_activemon():
+            self.get_activemon().switched_out()
+
 
     def switchin(self,target):
         if self.get_activemon():
-            self.get_activemon().switched_out()
+            self.switched_out()
         self.activemon = target
         self.get_activemon().switched_in()
         self.log(self.get_activemon().get_name()+" switches in!")
@@ -322,6 +332,8 @@ class Room():
         self.p2 = Side()
         self.p1.assign_room(self)
         self.p2.assign_room(self)
+        self.p1.otherside = self.p2
+        self.p2.otherside = self.p1
         self.winner = None
         self.past = []
         self.postpanic = None

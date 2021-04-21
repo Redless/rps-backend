@@ -106,6 +106,9 @@ class Status:
     def damagecalccallbackdefender(self):
         return 1
 
+    def get_visible(self):
+        return True
+
 class FieldEffect:
 
     def __init__(self,side,name):
@@ -123,6 +126,9 @@ class FieldEffect:
 
     def preturnendcallback(self):
         pass
+
+    def get_visible(self):
+        return True
 
 def construct_damaging_move(isSpecial,movetype,BP,name):
     return Move(lambda x, y: damage_dealing_move(x,y,isSpecial,movetype,BP,name),movetype)
@@ -172,7 +178,7 @@ def retreat(user,target):
     if user.get_num_living() == 1:
         user.log("BUT THERE'S NOWHERE LEFT TO RUN")
         return
-    user.get_activemon().switched_out()
+    user.switched_out()
     if user.get_activemon():
         user.activemon = None
         user.panicking = True
@@ -348,7 +354,28 @@ def deathdance(user,target):
 def lockdown(user,target):
     pass
 def ambush(user,target):
-    pass
+    for effect in target.fieldeffects:
+        if effect.get_str() == "ambush prepped":
+            if effect.sprung:
+                damage_dealing_move(user,target,False,"dark",30,"ambush")
+            else:
+                damage_dealing_move(user,target,False,"dark",15,"ambush")
+            return
+                
+    print("something went wrong with ambush")
+def ambush_PCB(user):
+    class AmbushprepEffect(FieldEffect):
+        def __init__(self,side):
+            FieldEffect.__init__(self,side,"ambush prepped")
+            self.sprung = False
+        def turnendcallback(self):
+            self.remove()
+        def switchedoutcallback(self):
+            self.sprung = True
+        def get_visible(self):
+            return False
+    user.otherside.add_effect(AmbushprepEffect(user.otherside))
+    return 0
 def lastword(user,target):
     pass
 
@@ -375,7 +402,7 @@ moves = {
         "resonate": Move(resonate,"psychic"),
         "visions of disaster": Move(disastervision,"psychic"),
         "death dance": Move(deathdance,"dark"),
-        "ambush": Move(ambush,"dark"),
+        "ambush": Move(ambush,"dark",prioritycallback=ambush_PCB),
         "lockdown": Move(lockdown,"dark"),
         "last word": Move(lastword,"dark"),
         }
