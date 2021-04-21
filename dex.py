@@ -1,8 +1,8 @@
 species = {
-        "Crockodyle":{"atk":100,"dfn":100,"spd":100,"spa":100,"spe":100,"types":["fire"]},
         "Puncher":{"atk":150,"dfn":120,"spd":80,"spa":60,"spe":85,"types":["fighting"]},
         "Aggrobull":{"atk":150,"dfn":100,"spd":100,"spa":105,"spe":140,"types":["dragon"]},
         "Serpyre":{"atk":130,"dfn":80,"spa":130,"spd":80,"spe":120,"types":["fire"]},
+        "Wavoracle":{"atk":70,"dfn":120,"spa":110,"spd":130,"spe":90,"types":["water"]},
 
 }
 
@@ -23,10 +23,11 @@ typematchup = [[ 1, 1, 1,.5,.5, 1, 1, 1, 1, 1, 0, 1], #normal #offensive type TH
 def damage_dealing_move(user,target,isSpecial,movetype,movepower,movename):
     user = user.get_activemon()
     target = target.get_activemon()
-    dmgmod = user.damage_calc_inflict()
     if not (user and target):
         print("user or target is KOd so damaging move failed")
         return
+    dmgmod = user.damage_calc_inflict()
+    dmgmod *= target.damage_calc_receive()
     user.side.room.log(user.get_name()+" used "+movename+"!")
     typeAdv = 1
     for x in target.types:
@@ -49,6 +50,7 @@ def damage_dealing_move(user,target,isSpecial,movetype,movepower,movename):
     target.took_direct_damage(damage)
     target.take_damage(damage)
     return damage
+    #when you update this, also update tsunami warning below (I'm sorry)
 
 class Move:
 
@@ -94,6 +96,27 @@ class Status:
 
     def damagecalccallbackattacker(self):
         return 1
+
+    def damagecalccallbackdefender(self):
+        return 1
+
+class FieldEffect:
+
+    def __init__(self,side,name):
+        self.side = side
+        self.name = name
+
+    def get_str(self):
+        return self.name
+
+    def remove(self):
+        self.side.remove_effect(self)
+
+    def turnendcallback(self):
+        pass
+
+    def preturnendcallback(self):
+        pass
 
 def construct_damaging_move(isSpecial,movetype,BP,name):
     return Move(lambda x, y: damage_dealing_move(x,y,isSpecial,movetype,BP,name),movetype)
@@ -176,6 +199,58 @@ def pilotlight(user,target):
                 return 1
         user.get_activemon().add_status(LitStatus(user.get_activemon()))
 
+def tsunamiwarning(user,target):
+    user.log(user.get_activemon().get_name()+" used tsunami warning!")
+    user = user.get_activemon()
+    dmgmod = user.damage_calc_inflict()
+    if "water" in user.types:
+        STAB = 1.5
+    else:
+        STAB = 1
+    spa = user.spa
+    def tsunami(target):
+        target.log("The tsunami hit "+target.get_name()+"!")
+        dmgmod2 = target.damage_calc_receive()
+        typeAdv = 1
+        for x in target.types:
+            typeAdv *= typematchup[typekey["water"]][typekey[x]]
+        if typeAdv == 0:
+            user.side.room.log("It had no effect!")
+            return 0
+        if typeAdv < 1:
+            user.side.room.log("It's not very effective...")
+        if typeAdv > 1:
+            user.side.room.log("It's super effective!")
+        damage = max(int(spa*35*STAB*dmgmod*dmgmod2*typeAdv/target.spd),1)
+        target.log(target.get_name()+" took "+str(damage)+" percent!")
+        target.take_damage(damage)
+    class TsunamiEffect(FieldEffect):
+        def __init__(self,side):
+            FieldEffect.__init__(self,side,"crashing waves")
+            self.turns = 2
+        def preturnendcallback(self):
+            if self.turns == 2:
+                self.side.log("You can hear the distant sound of waves.")
+                self.turns = 1
+            elif self.turns == 1:
+                self.side.log("The sound of waves is getting louder!")
+                self.name = "nearby waves"
+                self.turns = 0
+            else:
+                self.remove()
+                self.side.log("The tsunami crashes down!")
+                targ = target.get_activemon()
+                if targ:
+                    tsunami(targ)
+    for effect in user.side.fieldeffects:
+        if (effect.get_str() == "nearby waves") or (effect.get_str() == "crashing waves"):
+            user.log("A tsunami was already warned of!")
+            return
+    user.side.add_effect(TsunamiEffect(user.side))
+
+
+
+
     
 
 moves = {
@@ -191,5 +266,8 @@ moves = {
         "smoldering jaws": construct_damaging_move(False,"fire",24,"smoldering jaws"),
         "retreat": Move(retreat,"normal"),
         "pilot light": Move(pilotlight,"fire"),
+        "tsunami warning": Move(tsunamiwarning,"water"),
+        "wave call": construct_damaging_move(True,"water",35,"wave call"),
+        "mind break": construct_damaging_move(True,"psychic",22,"mind break"),
         }
 

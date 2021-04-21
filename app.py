@@ -59,6 +59,8 @@ class Mon():
         for callback in turnendcallbacks:
             callback.turnendcallback()
 
+    def pre_turn_ended(self):
+        pass
 
     def switched_out(self):
         for callback in [i for i in self.status]:
@@ -76,6 +78,12 @@ class Mon():
             out *= callback.damagecalccallbackattacker()
         return out
 
+    def damage_calc_receive(self):
+        out = 1
+        for callback in [i for i in self.status]:
+            out *= callback.damagecalccallbackdefender()
+        return out
+
 class Side():
 
     def __init__(self):
@@ -88,6 +96,14 @@ class Side():
         self.activemon = None
         self.team = None
         self.room = None
+        self.fieldeffects = []
+
+    def add_effect(self,effect):
+        self.fieldeffects.append(effect)
+
+    def remove_effect(self,effect):
+        if effect in self.fieldeffects:
+            self.fieldeffects.remove(effect)
 
     def get_num_living(self):
         tot = 0
@@ -143,9 +159,10 @@ class Side():
         return self.get_activemon().get_name()
 
     def get_status_active(self):
+        out = [i.get_str() for i in self.fieldeffects]
         if self.get_activemon() == None:
-            return []
-        return self.get_activemon().get_all_status_str()
+            return out
+        return out + self.get_activemon().get_all_status_str()
 
     def get_health_active(self):
         if self.get_activemon() == None:
@@ -222,7 +239,14 @@ class Side():
         return self.get_activemon() != None
 
     def turn_ended(self):
+        for callback in [i for i in self.fieldeffects]:
+            callback.turnendcallback()
         self.get_activemon().turn_ended()
+
+    def pre_turn_end(self):
+        for callback in [i for i in self.fieldeffects]:
+            callback.preturnendcallback()
+        self.get_activemon().pre_turn_ended()
 
     def is_move_valid(self,isMove,choice):
         if (self.awaitingrevenge or self.panicking) and isMove:
@@ -324,7 +348,8 @@ class Room():
         self.finish_turn()
 
     def pre_revenge_turn_end(self):
-        pass
+        self.p1.pre_turn_end()
+        self.p2.pre_turn_end()
 
     def finish_turn(self):
         self.pre_revenge_turn_end()
