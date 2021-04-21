@@ -23,6 +23,7 @@ typematchup = [[ 1, 1, 1,.5,.5, 1, 1, 1, 1, 1, 0, 1], #normal #offensive type TH
 def damage_dealing_move(user,target,isSpecial,movetype,movepower,movename):
     user = user.get_activemon()
     target = target.get_activemon()
+    dmgmod = user.damage_calc_inflict()
     if not (user and target):
         print("user or target is KOd so damaging move failed")
         return
@@ -37,6 +38,7 @@ def damage_dealing_move(user,target,isSpecial,movetype,movepower,movename):
         user.side.room.log("It's not very effective...")
     if typeAdv > 1:
         user.side.room.log("It's super effective!")
+    typeAdv *= dmgmod
     if movetype in user.types:
         typeAdv *= 1.5
     if isSpecial:
@@ -86,6 +88,12 @@ class Status:
 
     def prioritycallback(self):
         return 0 #add speed to user
+
+    def switchedoutcallback(self):
+        self.remove()
+
+    def damagecalccallbackattacker(self):
+        return 1
 
 def construct_damaging_move(isSpecial,movetype,BP,name):
     return Move(lambda x, y: damage_dealing_move(x,y,isSpecial,movetype,BP,name),movetype)
@@ -139,6 +147,37 @@ def retreat(user,target):
     user.panicking = True
     user.await_move()
 
+def pilotlight(user,target):
+    dmg = damage_dealing_move(user,target,True,"fire",5,"pilot light")
+    if dmg:
+        user.log(user.get_activemon().get_name()+" is getting fired up!")
+        class LitStatus(Status):
+            def __init__(self,mon):
+                Status.__init__(self,mon,"lit")
+                self.turnUsed = False
+            def is_move_fire(self):
+                action = self.mon.side.action
+                if not action[0]:
+                    return False
+                return moves[self.mon.moves[action[1]]].movetype == "fire"
+            def prioritycallback(self):
+                if self.is_move_fire():
+                    return 1000
+                return 0
+            def endturncallback(self):
+                if self.turnUsed:
+                    self.remove()
+                else:
+                    self.turnUsed=True
+            def damagecalccallbackattacker(self):
+                if self.is_move_fire():
+                    self.remove()
+                    return 1.5
+                return 1
+        user.get_activemon().add_status(LitStatus(user.get_activemon()))
+
+    
+
 moves = {
         "facepunch": construct_damaging_move(False,"fighting",25,"facepunch"),
         "falcon punch": construct_damaging_move(False,"fire",20,"falcon punch"),
@@ -151,5 +190,6 @@ moves = {
         "skydive": construct_damaging_move(False,"flying",20,"skydive"),
         "smoldering jaws": construct_damaging_move(False,"fire",24,"smoldering jaws"),
         "retreat": Move(retreat,"normal"),
+        "pilot light": Move(pilotlight,"fire"),
         }
 

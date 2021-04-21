@@ -61,13 +61,20 @@ class Mon():
 
 
     def switched_out(self):
-        pass
+        for callback in [i for i in self.status]:
+            callback.switchedoutcallback()
 
     def switched_in(self):
         pass
 
     def log(self,info):
         self.side.log(info)
+
+    def damage_calc_inflict(self):
+        out = 1
+        for callback in [i for i in self.status]:
+            out *= callback.damagecalccallbackattacker()
+        return out
 
 class Side():
 
