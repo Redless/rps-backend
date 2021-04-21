@@ -5,6 +5,7 @@ species = {
         "Wavoracle":{"atk":70,"dfn":120,"spa":110,"spd":130,"spe":90,"types":["water"]},
         "Falcoren":{"atk":135,"dfn":100,"spa":70,"spd":70,"spe":145,"types":["flying"]},
         "Hysteridoll":{"atk":100,"dfn":100,"spa":110,"spd":135,"spe":70,"types":["psychic"]},
+        "Noklu":{"atk":110,"dfn":110,"spa":90,"spd":110,"spe":100,"types":["dark"]},
 
 }
 
@@ -171,9 +172,11 @@ def retreat(user,target):
     if user.get_num_living() == 1:
         user.log("BUT THERE'S NOWHERE LEFT TO RUN")
         return
-    user.activemon = None
-    user.panicking = True
-    user.await_move()
+    user.get_activemon().switched_out()
+    if user.get_activemon():
+        user.activemon = None
+        user.panicking = True
+        user.await_move()
 
 def pilotlight(user,target):
     dmg = damage_dealing_move(user,target,True,"fire",5,"pilot light")
@@ -315,11 +318,46 @@ def disastervision(user,target):
     user.log(user.get_activemon().get_name()+"'s special defense rose!")
     user.log(user.get_activemon().get_name()+"'s speed harshly fell!")
 
+def deathdance(user,target):
+    user.log(user.get_activemon().get_name()+" used death dance!")
+    class PerishStatus(Status):
+        def __init__(self,mon):
+            Status.__init__(self,mon,"perish count: ")
+            self.count = 4
+        def get_str(self):
+            return self.name+str(self.count)
+        def turnendcallback(self):
+            self.count -= 1
+            self.mon.log(self.mon.get_name()+"'s perish count fell to "+str(self.count)+"!")
+            if self.count == 0:
+                self.mon.take_damage(100)
+    alreadyPerishing = False
+    for status in user.get_activemon().status:
+        if "perish count: " in status.get_str():
+            alreadyPerishing = True
+    if not alreadyPerishing:
+        user.get_activemon().add_status(PerishStatus(user.get_activemon()))
+    if target.get_activemon():
+        alreadyPerishing = False
+        for status in target.get_activemon().status:
+            if "perish count: " in status.get_str():
+                alreadyPerishing = True
+        if not alreadyPerishing:
+            target.get_activemon().add_status(PerishStatus(target.get_activemon()))
+
+def lockdown(user,target):
+    pass
+def ambush(user,target):
+    pass
+def lastword(user,target):
+    pass
+
+
 moves = {
         "facepunch": construct_damaging_move(False,"fighting",25,"facepunch"),
         "falcon punch": construct_damaging_move(False,"fire",20,"falcon punch"),
         "boulder toss": construct_damaging_move(False,"rock",22,"boulder toss"),
-        "forbidden shadow assault": construct_damaging_move(False,"dark",20,"forbidden shadow assault"),
+        "shadow strike": construct_damaging_move(False,"dark",20,"shadow strike"),
         "pilebunker": Move(pilebunker,"fighting",prioritycallback=pilebunker_PCB),
         "dragon fang": construct_damaging_move(False,"dragon",23,"dragon fang"),
         "rampage": Move(rampage,"dragon"),
@@ -335,6 +373,10 @@ moves = {
         "rivalry": Move(rivalry,"dark"),
         "brainwash": Move(brainwash,"psychic"),
         "resonate": Move(resonate,"psychic"),
-        "visions of disaster": Move(disastervision,"psychic")
+        "visions of disaster": Move(disastervision,"psychic"),
+        "death dance": Move(deathdance,"dark"),
+        "ambush": Move(ambush,"dark"),
+        "lockdown": Move(lockdown,"dark"),
+        "last word": Move(lastword,"dark"),
         }
 
