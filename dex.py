@@ -3,6 +3,7 @@ species = {
         "Aggrobull":{"atk":150,"dfn":100,"spd":100,"spa":105,"spe":140,"types":["dragon"]},
         "Serpyre":{"atk":130,"dfn":80,"spa":130,"spd":80,"spe":120,"types":["fire"]},
         "Wavoracle":{"atk":70,"dfn":120,"spa":110,"spd":130,"spe":90,"types":["water"]},
+        "Falcoren":{"atk":135,"dfn":100,"spa":70,"spd":70,"spe":145,"types":["flying"]},
 
 }
 
@@ -248,9 +249,35 @@ def tsunamiwarning(user,target):
             return
     user.side.add_effect(TsunamiEffect(user.side))
 
+def recklessdescent(user,target):
+    dmg = damage_dealing_move(user,target,False,"flying",35,"reckless descent")
+    if dmg:
+        recoil = max(dmg//3,1)
+        user.log(user.get_activemon().get_name()+" took "+str(recoil)+" percent recoil!")
+        user.get_activemon().take_damage(recoil)
 
-
-
+def rivalry(user,target):
+    user.log(user.get_activemon().get_name()+" used rivalry!")
+    for status in user.get_activemon().status:
+        if status.get_str() == "rival":
+            return
+    if target.get_activemon():
+        user.log(user.get_activemon().get_name()+" and "+target.get_activemon().get_name()+" became rivals!")
+    else:
+        return
+    class RivalryStatus(Status):
+        def __init__(self,mon1,mon2):
+            self.name = "rival"
+            self.mon1 = mon1
+            self.mon2 = mon2
+        def remove(self):
+            self.mon1.remove_status(self)
+            self.mon2.remove_status(self)
+        def damagecalccallbackdefender(self):
+            return 1.2
+    rivalrystatus = RivalryStatus(user.get_activemon(),target.get_activemon())
+    user.get_activemon().add_status(rivalrystatus)
+    target.get_activemon().add_status(rivalrystatus)
     
 
 moves = {
@@ -269,5 +296,7 @@ moves = {
         "tsunami warning": Move(tsunamiwarning,"water"),
         "wave call": construct_damaging_move(True,"water",35,"wave call"),
         "mind break": construct_damaging_move(True,"psychic",22,"mind break"),
+        "reckless descent": Move(recklessdescent,"flying"),
+        "rivalry": Move(rivalry,"dark"),
         }
 

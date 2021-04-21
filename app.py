@@ -246,7 +246,8 @@ class Side():
     def pre_turn_end(self):
         for callback in [i for i in self.fieldeffects]:
             callback.preturnendcallback()
-        self.get_activemon().pre_turn_ended()
+        if self.get_activemon():
+            self.get_activemon().pre_turn_ended()
 
     def is_move_valid(self,isMove,choice):
         if (self.awaitingrevenge or self.panicking) and isMove:
