@@ -18,6 +18,11 @@ class Mon():
         self.dfn = self.species["dfn"] + json["dfn"]
         self.spd = self.species["spd"] + json["spd"]
         self.spe = self.species["spe"]
+        self.atkboosts = 0
+        self.spaboosts = 0
+        self.dfnboosts = 0
+        self.spdboosts = 0
+        self.speboosts = 0
         self.types = self.species["types"]
         self.health = 100
         self.moves = json["moves"]
@@ -25,8 +30,40 @@ class Mon():
         self.status = []
         self.prioritycallbacks = []
 
+    def get_atk(self):
+        return self.atk * (1+(self.atkboosts/2))
+    def get_dfn(self):
+        return self.dfn * (1+(self.dfnboosts/2))
+    def get_spa(self):
+        return self.spa * (1+(self.spaboosts/2))
+    def get_spd(self):
+        return self.spd * (1+(self.spdboosts/2))
+    def get_spe(self):
+        return self.spe * (1+(self.speboosts/2))
+
     def get_all_status_str(self):
-        return [i.get_str() for i in self.status[::-1]]
+        status = [i.get_str() for i in self.status[::-1]]
+        if self.atkboosts>0:
+            status.append("attack +"+str(self.atkboosts))
+        elif self.atkboosts<0:
+            status.append("attack "+str(self.atkboosts))
+        if self.spaboosts>0:
+            status.append("special attack +"+str(self.spaboosts))
+        elif self.spaboosts<0:
+            status.append("special attack "+str(self.spaboosts))
+        if self.dfnboosts>0:
+            status.append("defense +"+str(self.dfnboosts))
+        elif self.dfnboosts<0:
+            status.append("defense "+str(self.dfnboosts))
+        if self.spdboosts>0:
+            status.append("special defense +"+str(self.spdboosts))
+        elif self.spdboosts<0:
+            status.append("special defense "+str(self.spdboosts))
+        if self.speboosts>0:
+            status.append("speed +"+str(self.speboosts))
+        elif self.speboosts<0:
+            status.append("speed "+str(self.speboosts))
+        return status
 
     def is_fainted(self):
         return self.health > 0
@@ -65,6 +102,10 @@ class Mon():
     def switched_out(self):
         for callback in [i for i in self.status]:
             callback.switchedoutcallback()
+        self.atkboosts = 0
+        self.spaboosts = 0
+        self.dfnboosts = 0
+        self.spdboosts = 0
 
     def switched_in(self):
         pass
@@ -202,7 +243,7 @@ class Side():
         for callback in [i for i in self.get_activemon().status]:
             movespeedmod += callback.prioritycallback()
         self.get_activemon().prioritycallbacks = []
-        return self.get_activemon().spe + movespeedmod
+        return self.get_activemon().get_spe() + movespeedmod
 
     def execute_action(self,targetside):
         if self.get_activemon() == None:

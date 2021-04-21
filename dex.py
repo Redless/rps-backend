@@ -45,9 +45,9 @@ def damage_dealing_move(user,target,isSpecial,movetype,movepower,movename):
     if movetype in user.types:
         typeAdv *= 1.5
     if isSpecial:
-        damage = max(int(user.spa*movepower*typeAdv/target.spd),1)
+        damage = max(int(user.get_spa()*movepower*typeAdv/target.get_spd()),1)
     else:
-        damage = max(int(user.atk*movepower*typeAdv/target.dfn),1)
+        damage = max(int(user.get_atk()*movepower*typeAdv/target.get_dfn()),1)
     user.side.room.log(target.get_name()+" took "+str(damage)+" percent!")
     target.took_direct_damage(damage)
     target.take_damage(damage)
@@ -209,7 +209,7 @@ def tsunamiwarning(user,target):
         STAB = 1.5
     else:
         STAB = 1
-    spa = user.spa
+    spa = user.get_spa()
     def tsunami(target):
         target.log("The tsunami hit "+target.get_name()+"!")
         dmgmod2 = target.damage_calc_receive()
@@ -223,7 +223,7 @@ def tsunamiwarning(user,target):
             user.side.room.log("It's not very effective...")
         if typeAdv > 1:
             user.side.room.log("It's super effective!")
-        damage = max(int(spa*35*STAB*dmgmod*dmgmod2*typeAdv/target.spd),1)
+        damage = max(int(spa*35*STAB*dmgmod*dmgmod2*typeAdv/target.get_spd()),1)
         target.log(target.get_name()+" took "+str(damage)+" percent!")
         target.take_damage(damage)
     class TsunamiEffect(FieldEffect):
@@ -302,6 +302,15 @@ def rivalry(user,target):
     user.get_activemon().add_status(rivalrystatus)
     target.get_activemon().add_status(rivalrystatus)
     
+def disastervision(user,target):
+    user.log(user.get_activemon().get_name()+" used visions of disaster!")
+    mon = user.get_activemon()
+    mon.spdboosts += 1
+    mon.dfnboosts += 1
+    mon.speboosts -= 2
+    user.log(user.get_activemon().get_name()+"'s defense rose!")
+    user.log(user.get_activemon().get_name()+"'s special defense rose!")
+    user.log(user.get_activemon().get_name()+"'s speed harshly fell!")
 
 moves = {
         "facepunch": construct_damaging_move(False,"fighting",25,"facepunch"),
@@ -323,5 +332,6 @@ moves = {
         "rivalry": Move(rivalry,"dark"),
         "brainwash": Move(brainwash,"psychic"),
         "resonate": Move(resonate,"psychic"),
+        "visions of disaster": Move(disastervision,"psychic")
         }
 
