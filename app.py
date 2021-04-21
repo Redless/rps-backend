@@ -99,6 +99,12 @@ class Mon():
     def pre_turn_ended(self):
         pass
 
+    def fainted(self):
+        callbacks = [i for i in self.status]
+        for callback in callbacks:
+            callback.knockedoutcallback()
+
+
     def switched_out(self):
         for callback in [i for i in self.status]:
             callback.switchedoutcallback()
@@ -162,6 +168,7 @@ class Side():
 
     def knockout(self):
         self.room.log(self.get_activemon().get_name()+" fainted!")
+        self.get_activemon().fainted()
         self.activemon = None
         if self.whole_team_KO():
             self.room.finishgame(self)

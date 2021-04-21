@@ -87,6 +87,9 @@ class Status:
     def tookdirectdamagecallback(self):
         pass
 
+    def knockedoutcallback(self):
+        self.remove()
+
     def abouttousemovecallback(self):
         return False # if it returns true, prevents them from using a move
 
