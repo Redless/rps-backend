@@ -288,8 +288,11 @@ class Side():
         if self.get_activemon():
             self.switched_out()
         self.activemon = target
-        self.get_activemon().switched_in()
         self.log(self.get_activemon().get_name()+" switches in!")
+        for callback in [i for i in self.fieldeffects]:
+            callback.switchedincallback()
+        if self.get_activemon():
+            self.get_activemon().switched_in()
 
     def revengein(self):
         self.awaitingrevenge = False

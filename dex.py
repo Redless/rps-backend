@@ -137,6 +137,12 @@ class FieldEffect:
     def get_visible(self):
         return True
 
+    def switchedincallback(self):
+        pass
+
+    def switchedoutcallback(self):
+        pass
+
 def construct_damaging_move(isSpecial,movetype,BP,name):
     return Move(lambda x, y: damage_dealing_move(x,y,isSpecial,movetype,BP,name),movetype)
 
@@ -449,7 +455,20 @@ def bonecrushtackle(user,target):
             mon.add_status(BonecrushedStatus(mon))
 
 def boneshardscatter(user,target):
-    pass
+    user.log(user.get_activemon().get_name()+" used boneshard scatter!")
+    for effect in target.fieldeffects:
+        if effect.get_str() == "boneshards":
+            return
+    class BoneshardEffect(FieldEffect):
+        def switchedincallback(self):
+            mon = self.side.get_activemon()
+            typeAdv = 12
+            for x in mon.types:
+                typeAdv *= typematchup[typekey["rock"]][typekey[x]]
+            mon.log("Pointed stones dug into "+mon.get_name())
+            mon.take_damage(typeAdv)
+    target.add_effect(BoneshardEffect(target,"boneshards"))
+
 
 moves = {
         "facepunch": construct_damaging_move(False,"fighting",25,"facepunch"),
