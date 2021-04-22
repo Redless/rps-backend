@@ -376,8 +376,34 @@ def ambush_PCB(user):
             return False
     user.otherside.add_effect(AmbushprepEffect(user.otherside))
     return 0
-def lastword(user,target):
-    pass
+
+def lastword(user,target,onSwitch=False):
+    for effect in target.fieldeffects:
+        if effect.get_str() == "pursuit prepped":
+            if effect.pursued:
+                return
+            effect.pursued = True
+            damage_dealing_move(user,target,True,"dark",20 if onSwitch else 10,"last word")
+
+def lastword_PCB(user):
+    class PursuedEffect(FieldEffect):
+        def __init__(self,side):
+            FieldEffect.__init__(self,side,"pursuit prepped")
+            self.pursued = False
+        def turnendcallback(self):
+            self.remove()
+        def remove(self):
+            FieldEffect.remove(self)
+            user.log("HERE I GO")
+        def get_visible(self):
+            return False
+        def switchedoutcallback(self):
+            user.log("HERE I COME")
+            lastword(user,user.otherside,onSwitch=True)
+    user.otherside.add_effect(PursuedEffect(user.otherside))
+    return 0
+
+
 
 
 moves = {
@@ -404,6 +430,6 @@ moves = {
         "death dance": Move(deathdance,"dark"),
         "ambush": Move(ambush,"dark",prioritycallback=ambush_PCB),
         "lockdown": Move(lockdown,"dark"),
-        "last word": Move(lastword,"dark"),
+        "last word": Move(lastword,"dark",prioritycallback=lastword_PCB),
         }
 
