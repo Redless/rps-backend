@@ -76,6 +76,9 @@ class Status:
         self.name = name
         self.mon = mon
 
+    def movevalidcallback(self,isMove,choice):
+        return True
+
     def get_str(self):
         return self.name
 
@@ -114,6 +117,9 @@ class FieldEffect:
     def __init__(self,side,name):
         self.side = side
         self.name = name
+
+    def movevalidcallback(self,isMove,choice):
+        return True
 
     def get_str(self):
         return self.name
@@ -352,7 +358,24 @@ def deathdance(user,target):
             target.get_activemon().add_status(PerishStatus(target.get_activemon()))
 
 def lockdown(user,target):
-    pass
+    user.log(user.get_activemon().get_name()+" used lockdown!")
+    for effect in user.fieldeffects:
+        if effect.get_str() == "lockdown":
+            user.log("Lockdown is already in effect!")
+            return
+    class LockdownEffect(FieldEffect):
+        def __init__(self,side):
+            FieldEffect.__init__(self,side,"lockdown")
+            self.turnused = False
+        def turnendcallback(self):
+            if self.turnused:
+                self.remove()
+            self.turnused = True
+        def movevalidcallback(self,isMove,choice):
+            return isMove
+    user.add_effect(LockdownEffect(user))
+    target.add_effect(LockdownEffect(target))
+
 def ambush(user,target):
     for effect in target.fieldeffects:
         if effect.get_str() == "ambush prepped":
@@ -384,6 +407,8 @@ def lastword(user,target,onSwitch=False):
                 return
             effect.pursued = True
             damage_dealing_move(user,target,True,"dark",20 if onSwitch else 10,"last word")
+            return
+    print("something went wrong with lastword")
 
 def lastword_PCB(user):
     class PursuedEffect(FieldEffect):
@@ -392,18 +417,12 @@ def lastword_PCB(user):
             self.pursued = False
         def turnendcallback(self):
             self.remove()
-        def remove(self):
-            FieldEffect.remove(self)
-            user.log("HERE I GO")
         def get_visible(self):
             return False
         def switchedoutcallback(self):
-            user.log("HERE I COME")
             lastword(user,user.otherside,onSwitch=True)
     user.otherside.add_effect(PursuedEffect(user.otherside))
     return 0
-
-
 
 
 moves = {

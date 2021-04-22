@@ -131,6 +131,12 @@ class Mon():
             out *= callback.damagecalccallbackdefender()
         return out
 
+    def is_move_valid(self,isMove,choice):
+        for status in self.status:
+            if not status.movevalidcallback():
+                return False
+        return True
+
 class Side():
 
     def __init__(self):
@@ -317,6 +323,13 @@ class Side():
         if (not isMove) and (choice == self.activemon):
             print("cannot switch in currently active mon")
             return False
+        if not self.get_activemon().is_move_valid(isMove,choice):
+            print("status restricting options")
+            return False
+        for effect in self.fieldeffects:
+            if not effect.movevalidcallback(isMove,choice):
+                print("field effect restricting options")
+                return False
         return True
 
     def log(self,info):
