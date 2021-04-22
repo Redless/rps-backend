@@ -133,7 +133,7 @@ class Mon():
 
     def is_move_valid(self,isMove,choice):
         for status in self.status:
-            if not status.movevalidcallback():
+            if not status.movevalidcallback(isMove,choice):
                 return False
         return True
 
@@ -323,9 +323,10 @@ class Side():
         if (not isMove) and (choice == self.activemon):
             print("cannot switch in currently active mon")
             return False
-        if not self.get_activemon().is_move_valid(isMove,choice):
-            print("status restricting options")
-            return False
+        if self.get_activemon():
+            if not self.get_activemon().is_move_valid(isMove,choice):
+                print("status restricting options")
+                return False
         for effect in self.fieldeffects:
             if not effect.movevalidcallback(isMove,choice):
                 print("field effect restricting options")

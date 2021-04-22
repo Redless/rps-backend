@@ -6,6 +6,7 @@ species = {
         "Falcoren":{"atk":135,"dfn":100,"spa":70,"spd":70,"spe":145,"types":["flying"]},
         "Hysteridoll":{"atk":100,"dfn":100,"spa":110,"spd":135,"spe":70,"types":["psychic"]},
         "Noklu":{"atk":110,"dfn":110,"spa":90,"spd":110,"spe":100,"types":["dark"]},
+        "Paleosaurus":{"atk":110,"dfn":150,"spa":30,"spd":120,"spe":45,"types":["rock"]},
 
 }
 
@@ -13,7 +14,7 @@ typekey = {"normal":0,"fighting":1,"flying":2,"rock":3,"steel":4,"dragon":5,"fir
 typematchup = [[ 1, 1, 1,.5,.5, 1, 1, 1, 1, 1, 0, 1], #normal #offensive type THEN defensive type order..
                [ 2, 1,.5, 2, 2, 1, 1, 1, 1,.5, 0, 2], #fighting
                [ 1, 2, 1,.5,.5, 1, 1, 1, 2, 1, 1, 1], #flying
-               [ 1,.5, 2, 1,.5, 1, 2, 1, 1, 1, 1, 1], #rock
+               [ 1,.5, 2, 1,.5, 2, 2, 1, 1, 1, 1, 1], #rock
                [ 1, 1, 1, 2,.5, 1,.5,.5, 1, 1, 1, 1], #steel
                [ 1, 1, 1, 1,.5, 2, 1, 1, 1, 1, 1, 1], #dragon
                [ 1, 1, 1,.5, 2,.5,.5,.5, 2, 1, 2, 2], #fire
@@ -424,6 +425,31 @@ def lastword_PCB(user):
     user.otherside.add_effect(PursuedEffect(user.otherside))
     return 0
 
+def rocksplosion(user,target):
+    dmg = damage_dealing_move(user,target,False,"rock",60,"rocksplosion")
+    if dmg:
+        user.log(user.get_activemon().get_name()+" exploded!")
+        user.get_activemon().take_damage(100)
+
+def bonecrushtackle(user,target):
+    dmg = damage_dealing_move(user,target,False,"rock",10,"bonecrush tackle")
+    if dmg:
+        class BonecrushedStatus(Status):
+            def __init__(self,mon):
+                Status.__init__(self,mon,"bonecrushed")
+                self.turnused = False
+            def turnendcallback(self):
+                if self.turnused:
+                    self.remove()
+                self.turnused = True
+            def prioritycallback(self):
+                return -1000
+        mon = target.get_activemon()
+        if mon:
+            mon.add_status(BonecrushedStatus(mon))
+
+def boneshardscatter(user,target):
+    pass
 
 moves = {
         "facepunch": construct_damaging_move(False,"fighting",25,"facepunch"),
@@ -450,5 +476,7 @@ moves = {
         "ambush": Move(ambush,"dark",prioritycallback=ambush_PCB),
         "lockdown": Move(lockdown,"dark"),
         "last word": Move(lastword,"dark",prioritycallback=lastword_PCB),
+        "rocksplosion": Move(rocksplosion,"rock"),
+        "boneshard scatter": Move(boneshardscatter,"rock"),
+        "bonecrush tackle": Move(bonecrushtackle,"rock"),
         }
-
