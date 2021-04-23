@@ -7,20 +7,20 @@ species = {
         "Hysteridoll":{"atk":100,"dfn":100,"spa":110,"spd":135,"spe":70,"types":["psychic"]},
         "Noklu":{"atk":110,"dfn":110,"spa":90,"spd":110,"spe":100,"types":["dark"]},
         "Paleosaurus":{"atk":110,"dfn":150,"spa":30,"spd":120,"spe":45,"types":["rock"]},
-
+        "LZC-3000":{"atk":80,"dfn":130,"spa":110,"spd":110,"spe":60,"types":["steel"]},
 }
 
 typekey = {"normal":0,"fighting":1,"flying":2,"rock":3,"steel":4,"dragon":5,"fire":6,"water":7,"grass":8,"psychic":9,"ghost":10,"dark":11}
 typematchup = [[ 1, 1, 1,.5,.5, 1, 1, 1, 1, 1, 0, 1], #normal #offensive type THEN defensive type order..
                [ 2, 1,.5, 2, 2, 1, 1, 1, 1,.5, 0, 2], #fighting
                [ 1, 2, 1,.5,.5, 1, 1, 1, 2, 1, 1, 1], #flying
-               [ 1,.5, 2, 1,.5, 2, 2, 1, 1, 1, 1, 1], #rock
+               [ 1,.5, 2, 1,.5, 1, 2, 1, 1, 1, 1, 1], #rock
                [ 1, 1, 1, 2,.5, 1,.5,.5, 1, 1, 1, 1], #steel
                [ 1, 1, 1, 1,.5, 2, 1, 1, 1, 1, 1, 1], #dragon
-               [ 1, 1, 1,.5, 2,.5,.5,.5, 2, 1, 2, 2], #fire
+               [ 1, 1, 1,.5, 2,.5,.5,.5, 2, 1, 1, 1], #fire
                [ 1, 1, 1, 2, 1,.5, 2,.5,.5, 1, 1, 1], #water
                [ 1, 1,.5, 2,.5,.5,.5, 2,.5, 1, 1, 1], #grass
-               [ 1, 2, 1, 1,.5, 1, 1, 1, 1,.5, 1, 0], #psychic
+               [ 1, 2, 1, 1,.5, 2, 1, 1, 1,.5, 1, 0], #psychic
                [ 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2,.5], #ghost
                [ 1,.5, 1, 1, 1, 1, 1, 1, 1, 2, 2,.5]] #dark
 
@@ -141,6 +141,9 @@ class FieldEffect:
         pass
 
     def switchedoutcallback(self):
+        pass
+
+    def hazardclearcallback(self):
         pass
 
 def construct_damaging_move(isSpecial,movetype,BP,name):
@@ -433,9 +436,8 @@ def lastword_PCB(user):
 
 def rocksplosion(user,target):
     dmg = damage_dealing_move(user,target,False,"rock",60,"rocksplosion")
-    if dmg:
-        user.log(user.get_activemon().get_name()+" exploded!")
-        user.get_activemon().take_damage(100)
+    user.log(user.get_activemon().get_name()+" exploded!")
+    user.get_activemon().take_damage(100)
 
 def bonecrushtackle(user,target):
     dmg = damage_dealing_move(user,target,False,"rock",10,"bonecrush tackle")
@@ -467,7 +469,32 @@ def boneshardscatter(user,target):
                 typeAdv *= typematchup[typekey["rock"]][typekey[x]]
             mon.log("Pointed stones dug into "+mon.get_name())
             mon.take_damage(typeAdv)
+        def hazardclearcallback(self):
+            self.remove()
     target.add_effect(BoneshardEffect(target,"boneshards"))
+
+def selfdestruct(user,target):
+    dmg = damage_dealing_move(user,target,False,"normal",60,"selfdestruct")
+    user.log(user.get_activemon().get_name()+" exploded!")
+    user.get_activemon().take_damage(100)
+
+def draconicbombardment(user,target):
+    dmg = damage_dealing_move(user,target,True,"dragon",34,"draconic bombardment")
+    if dmg:
+        user.log(user.get_activemon().get_name()+"'s special attack harshly fell!")
+        user.get_activemon().spaboosts -= 2
+
+def amplification(user,target):
+    user.log(user.get_activemon().get_name()+" used amplification!")
+    user.log(user.get_activemon().get_name()+"'s special attack sharply rose!")
+    user.get_activemon().spaboosts += 2
+
+def secureperimeter(user,target):
+    dmg = damage_dealing_move(user,target,False,"normal",5,"secure_perimeter")
+    if dmg:
+        user.log(user.get_activemon().get_name()+" secured the perimeter!")
+        for callback in [i for i in user.fieldeffects]:
+            callback.hazardclearcallback()
 
 
 moves = {
@@ -498,4 +525,9 @@ moves = {
         "rocksplosion": Move(rocksplosion,"rock"),
         "boneshard scatter": Move(boneshardscatter,"rock"),
         "bonecrush tackle": Move(bonecrushtackle,"rock"),
+        "metal ion laser": construct_damaging_move(True,"steel",23,"metal ion laser"),
+        "draconic bombardment": Move(draconicbombardment,"dragon"),
+        "amplification": Move(amplification,"steel"),
+        "secure perimeter": Move(secureperimeter,"normal"),
+        "selfdestruct": Move(selfdestruct,"normal"),
         }
