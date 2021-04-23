@@ -8,6 +8,7 @@ species = {
         "Noklu":{"atk":110,"dfn":110,"spa":90,"spd":110,"spe":100,"types":["dark"]},
         "Paleosaurus":{"atk":110,"dfn":150,"spa":30,"spd":120,"spe":45,"types":["rock"]},
         "LZC-3000":{"atk":80,"dfn":130,"spa":110,"spd":110,"spe":60,"types":["steel"]},
+        "Poltervice":{"atk":60,"dfn":100,"spa":125,"spd":135,"spe":110,"types":["ghost"]},
 }
 
 typekey = {"normal":0,"fighting":1,"flying":2,"rock":3,"steel":4,"dragon":5,"fire":6,"water":7,"grass":8,"psychic":9,"ghost":10,"dark":11}
@@ -51,8 +52,8 @@ def damage_dealing_move(user,target,isSpecial,movetype,movepower,movename):
     else:
         damage = max(int(user.get_atk()*movepower*typeAdv/target.get_dfn()),1)
     user.side.room.log(target.get_name()+" took "+str(damage)+" percent!")
-    target.took_direct_damage(damage)
     target.take_damage(damage)
+    target.took_direct_damage(damage)
     return damage
     #when you update this, also update tsunami warning below (I'm sorry)
 
@@ -496,6 +497,29 @@ def secureperimeter(user,target):
         for callback in [i for i in user.fieldeffects]:
             callback.hazardclearcallback()
 
+def powerrite(user,target):
+    user.log(user.get_activemon().get_name()+" used rite of power!")
+    user.log(user.get_activemon().get_name()+"'s special attack sharply rose!")
+    user.log(user.get_activemon().get_name()+"'s speed sharply rose!")
+    user.log(user.get_activemon().get_name()+" cut its HP!")
+    user.get_activemon().spaboosts += 2
+    user.get_activemon().speboosts += 2
+    user.get_activemon().take_damage(25)
+
+def entwinefate(user,target):
+    user.log(user.get_activemon().get_name()+" used entwine fate!")
+    class FateStatus(Status):
+        def tookdirectdamagecallback(self):
+            if not self.mon.is_fainted():
+                deadnow = self.mon.side.otherside.get_activemon()
+                if deadnow:
+                    self.mon.log("It seems their fates were joined...")
+                    deadnow.take_damage(100)
+        def turnendcallback(self):
+            self.remove()
+        def knockedoutcallback(self):
+            pass
+    user.get_activemon().add_status(FateStatus(user.get_activemon(),"entwined fate"))
 
 moves = {
         "facepunch": construct_damaging_move(False,"fighting",25,"facepunch"),
@@ -530,4 +554,7 @@ moves = {
         "amplification": Move(amplification,"steel"),
         "secure perimeter": Move(secureperimeter,"normal"),
         "selfdestruct": Move(selfdestruct,"normal"),
+        "rite of power": Move(powerrite,"ghost"),
+        "entwine fate": Move(entwinefate,"ghost"),
+        "hex": construct_damaging_move(True,"ghost",22,"hex"),
         }
