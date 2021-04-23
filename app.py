@@ -31,15 +31,20 @@ class Mon():
         self.prioritycallbacks = []
 
     def get_atk(self):
-        return self.atk * (1+(self.atkboosts/2))
+        return self.get_stat(self.atk,self.atkboosts)
     def get_dfn(self):
-        return self.dfn * (1+(self.dfnboosts/2))
+        return self.get_stat(self.dfn,self.dfnboosts)
     def get_spa(self):
-        return self.spa * (1+(self.spaboosts/2))
+        return self.get_stat(self.spa,self.spaboosts)
     def get_spd(self):
-        return self.spd * (1+(self.spdboosts/2))
+        return self.get_stat(self.spd,self.spdboosts)
     def get_spe(self):
-        return self.spe * (1+(self.speboosts/2))
+        return self.get_stat(self.spe,self.speboosts)
+
+    def get_stat(self,stat,boosts):
+        if boosts > 0:
+            return stat * (1+(boosts/2))
+        return stat / (1+(boosts/-2))
 
     def get_all_status_str(self):
         status = [i.get_str() for i in self.status[::-1]]
