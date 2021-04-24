@@ -535,7 +535,7 @@ moves = {
         "retreat": Move(retreat,"normal"),
         "pilot light": Move(pilotlight,"fire"),
         "tsunami warning": Move(tsunamiwarning,"water"),
-        "wave call": construct_damaging_move(True,"water",35,"wave call"),
+        "wave call": construct_damaging_move(True,"water",20,"wave call"),
         "mind break": construct_damaging_move(True,"psychic",22,"mind break"),
         "reckless descent": Move(recklessdescent,"flying"),
         "rivalry": Move(rivalry,"dark"),
