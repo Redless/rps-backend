@@ -461,12 +461,23 @@ class Room():
 
 
 rooms = []
-rooms.append(Room())
 
 @app.route('/', methods = ['POST'])
 def result():
     received = request.get_json(force=True)
-    side=rooms[0].get_side(received["side"])
+    reqtype = received["type"]
+    if received["type"] == "makeroom":
+        rooms.append(Room())
+        return "{}"
+    if received["type"] == "getrooms":
+        thing = {"numrooms":len(rooms)}
+        response = jsonify(thing)
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response
+    if reqtype == "getinfo":
+        return getinfo(received)
+    roomnum = received["room"]
+    side=rooms[roomnum].get_side(received["side"])
     if received["type"] == "team":
         side.load_team(received["mons"])
     if received["type"] == "move":
@@ -475,28 +486,11 @@ def result():
         side.queue_action(False,received["mon"])
     return "{}"
 
-def process_new_move(side,move):
-    global p1movereceived
-    global p2movereceived
-    if not side:
-        if not p1movereceived:
-            p1movereceived = True
-            p1moves.append(move)
-
-    else:
-        if not p2movereceived:
-            p2movereceived = True
-            p2moves.append(move)
-    if p2movereceived and p1movereceived:
-        updatescore()
-
-
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def catch_all(path):
-    p1side = rooms[0].get_side(False)
-    p2side = rooms[0].get_side(True)
-    thing = {"fightactive":rooms[0].fight_active(),"p1mon":p1side.get_name_active(),"p2mon":p2side.get_name_active(),"p1health":p1side.get_health_active(),"p2health":p2side.get_health_active(),"p1moves":p1side.get_moves_active(),"p2moves":p2side.get_moves_active(),"p1switches":p1side.get_switches(),"p2switches":p2side.get_switches(),"winner":rooms[0].winner,"log":rooms[0].past,"p1status":p1side.get_status_active(),"p2status":p2side.get_status_active()}
+def getinfo(received):
+    roomnum = received["room"]
+    p1side = rooms[roomnum].get_side(False)
+    p2side = rooms[roomnum].get_side(True)
+    thing = {"fightactive":rooms[roomnum].fight_active(),"p1mon":p1side.get_name_active(),"p2mon":p2side.get_name_active(),"p1health":p1side.get_health_active(),"p2health":p2side.get_health_active(),"p1moves":p1side.get_moves_active(),"p2moves":p2side.get_moves_active(),"p1switches":p1side.get_switches(),"p2switches":p2side.get_switches(),"winner":rooms[roomnum].winner,"log":rooms[roomnum].past,"p1status":p1side.get_status_active(),"p2status":p2side.get_status_active()}
     #print("sending",thing)
     response = jsonify(thing)
     response.headers.add('Access-Control-Allow-Origin', '*')
