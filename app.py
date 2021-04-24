@@ -27,8 +27,9 @@ class Mon():
         self.health = 100
         self.moves = json["moves"]
         self.side = side
-        self.status = []
+        self.status = [] 
         self.prioritycallbacks = []
+        self.seen = False
 
     def get_atk(self):
         return self.get_stat(self.atk,self.atkboosts)
@@ -119,7 +120,7 @@ class Mon():
         self.spdboosts = 0
 
     def switched_in(self):
-        pass
+        self.seen = True
 
     def log(self,info):
         self.side.log(info)
@@ -206,6 +207,7 @@ class Side():
             self.room.get_side(False).await_move()
             self.room.log("let the games begin!")
             self.room.log("turn: 1")
+        self.get_activemon().seen = True
 
     def assign_room(self,room):
         self.room = room
@@ -236,6 +238,24 @@ class Side():
         if self.get_activemon() == None:
             return None
         return self.get_activemon().get_moves()
+
+    def get_seen_mons(self):
+        if not self.team:
+            return None
+        out = []
+        for mon in self.team:
+            if mon.seen:
+                out.append(mon.get_name())
+        return out
+
+    def get_seen_healths(self):
+        if not self.team:
+            return None
+        out = []
+        for mon in self.team:
+            if mon.seen:
+                out.append(mon.health)
+        return out
 
     def get_switches(self):
         if not self.team:
@@ -488,10 +508,11 @@ def result():
 
 def getinfo(received):
     roomnum = received["room"]
+    if roomnum >= len(rooms):
+        return "{}"
     p1side = rooms[roomnum].get_side(False)
     p2side = rooms[roomnum].get_side(True)
-    thing = {"fightactive":rooms[roomnum].fight_active(),"p1mon":p1side.get_name_active(),"p2mon":p2side.get_name_active(),"p1health":p1side.get_health_active(),"p2health":p2side.get_health_active(),"p1moves":p1side.get_moves_active(),"p2moves":p2side.get_moves_active(),"p1switches":p1side.get_switches(),"p2switches":p2side.get_switches(),"winner":rooms[roomnum].winner,"log":rooms[roomnum].past,"p1status":p1side.get_status_active(),"p2status":p2side.get_status_active()}
-    #print("sending",thing)
+    thing = {"fightactive":rooms[roomnum].fight_active(),"p1mon":p1side.get_name_active(),"p2mon":p2side.get_name_active(),"p1health":p1side.get_health_active(),"p2health":p2side.get_health_active(),"p1moves":p1side.get_moves_active(),"p2moves":p2side.get_moves_active(),"p1switches":p1side.get_switches(),"p2switches":p2side.get_switches(),"winner":rooms[roomnum].winner,"log":rooms[roomnum].past,"p1status":p1side.get_status_active(),"p2status":p2side.get_status_active(),"p1healths":p1side.get_seen_healths(),"p2healths":p2side.get_seen_healths(),"p1mons":p1side.get_seen_mons(),"p2mons":p2side.get_seen_mons()}
     response = jsonify(thing)
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
