@@ -26,6 +26,9 @@ class Mon():
         self.types = self.species["types"]
         self.health = 100
         self.moves = json["moves"]
+        for move in self.moves:
+            if move not in moves:
+                1/0
         self.side = side
         self.status = [] 
         self.prioritycallbacks = []

@@ -5,10 +5,10 @@ species = {
         "Wavoracle":{"atk":70,"dfn":120,"spa":110,"spd":130,"spe":90,"types":["water"]},
         "Falcoren":{"atk":135,"dfn":100,"spa":70,"spd":70,"spe":145,"types":["flying"]},
         "Hysteridoll":{"atk":100,"dfn":100,"spa":110,"spd":135,"spe":70,"types":["psychic"]},
-        "Noklu":{"atk":110,"dfn":110,"spa":90,"spd":110,"spe":100,"types":["dark"]},
+        "Noklu":{"atk":120,"dfn":110,"spa":90,"spd":120,"spe":100,"types":["dark"]},
         "Paleosaurus":{"atk":110,"dfn":150,"spa":30,"spd":120,"spe":45,"types":["rock"]},
         "LZC-3000":{"atk":80,"dfn":130,"spa":110,"spd":110,"spe":60,"types":["steel"]},
-        "Poltervice":{"atk":60,"dfn":100,"spa":125,"spd":135,"spe":110,"types":["ghost"]},
+        "Poltervice":{"atk":60,"dfn":80,"spa":125,"spd":135,"spe":110,"types":["ghost"]},
 }
 
 typekey = {"normal":0,"fighting":1,"flying":2,"rock":3,"steel":4,"dragon":5,"fire":6,"water":7,"grass":8,"psychic":9,"ghost":10,"dark":11}
@@ -391,7 +391,7 @@ def ambush(user,target):
     for effect in target.fieldeffects:
         if effect.get_str() == "ambush prepped":
             if effect.sprung:
-                damage_dealing_move(user,target,False,"dark",30,"ambush")
+                damage_dealing_move(user,target,False,"dark",45,"ambush")
             else:
                 damage_dealing_move(user,target,False,"dark",15,"ambush")
             return
@@ -417,7 +417,7 @@ def lastword(user,target,onSwitch=False):
             if effect.pursued:
                 return
             effect.pursued = True
-            damage_dealing_move(user,target,True,"dark",20 if onSwitch else 10,"last word")
+            damage_dealing_move(user,target,False,"dark",20 if onSwitch else 10,"last word")
             return
     print("something went wrong with lastword")
 
@@ -504,22 +504,33 @@ def powerrite(user,target):
     user.log(user.get_activemon().get_name()+" cut its HP!")
     user.get_activemon().spaboosts += 2
     user.get_activemon().speboosts += 2
-    user.get_activemon().take_damage(25)
+    user.get_activemon().take_damage(40)
 
 def entwinefate(user,target):
     user.log(user.get_activemon().get_name()+" used entwine fate!")
     class FateStatus(Status):
+        def __init__(self,mon):
+            Status.__init__(self,mon,"entwined fate")
+            self.used = False
         def tookdirectdamagecallback(self):
+            if self.used:
+                return
             if not self.mon.is_fainted():
                 deadnow = self.mon.side.otherside.get_activemon()
                 if deadnow:
                     self.mon.log("It seems their fates were joined...")
                     deadnow.take_damage(100)
         def turnendcallback(self):
-            self.remove()
+            if self.used:
+                self.remove()
+            self.name = "frayed fate"
+            self.used = True
         def knockedoutcallback(self):
             pass
-    user.get_activemon().add_status(FateStatus(user.get_activemon(),"entwined fate"))
+    for status in user.get_activemon().status:
+        if status.get_str() == "frayed fate":
+            return
+    user.get_activemon().add_status(FateStatus(user.get_activemon()))
 
 moves = {
         "facepunch": construct_damaging_move(False,"fighting",25,"facepunch"),
