@@ -223,11 +223,11 @@ def pilotlight(user,target):
                 if self.is_move_fire():
                     return 1000
                 return 0
-            def endturncallback(self):
+            '''def endturncallback(self):
                 if self.turnUsed:
-                    self.remove()
+                    self.remove() #status is permanent so this isn't needed
                 else:
-                    self.turnUsed=True
+                    self.turnUsed=True'''
             def damagecalccallbackattacker(self):
                 if self.is_move_fire():
                     self.remove()
