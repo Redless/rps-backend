@@ -9,6 +9,8 @@ species = {
         "Paleosaurus":{"atk":110,"dfn":150,"spa":30,"spd":120,"spe":45,"types":["rock"]},
         "LZC-3000":{"atk":80,"dfn":130,"spa":110,"spd":110,"spe":60,"types":["steel"]},
         "Poltervice":{"atk":60,"dfn":80,"spa":125,"spd":135,"spe":110,"types":["ghost"]},
+        "Heartbreaker":{"atk":130,"dfn":100,"spa":70,"spd":100,"spe":135,"types":["normal"]},
+        "Moldleaf":{"atk":80,"dfn":150,"spa":110,"spd":120,"spe":55,"types":["grass"]},
 }
 
 typekey = {"normal":0,"fighting":1,"flying":2,"rock":3,"steel":4,"dragon":5,"fire":6,"water":7,"grass":8,"psychic":9,"ghost":10,"dark":11}
@@ -491,11 +493,24 @@ def amplification(user,target):
     user.get_activemon().spaboosts += 2
 
 def secureperimeter(user,target):
-    dmg = damage_dealing_move(user,target,False,"normal",5,"secure_perimeter")
+    dmg = damage_dealing_move(user,target,False,"normal",5,"secure perimeter")
     if dmg:
         user.log(user.get_activemon().get_name()+" secured the perimeter!")
         for callback in [i for i in user.fieldeffects]:
             callback.hazardclearcallback()
+
+def rebound(user,target):
+    dmg = damage_dealing_move(user,target,False,"normal",16,"rebound")
+    if dmg:
+        user.log(user.get_activemon().get_name()+" bounced away!")
+        if user.get_num_living() == 1:
+            user.log("BUT THERE'S NOWHERE LEFT TO RUN")
+            return
+        user.switched_out()
+        if user.get_activemon():
+            user.activemon = None
+            user.panicking = True
+            user.await_move()
 
 def powerrite(user,target):
     user.log(user.get_activemon().get_name()+" used rite of power!")
@@ -537,6 +552,11 @@ moves = {
         "falcon punch": construct_damaging_move(False,"fire",20,"falcon punch"),
         "boulder toss": construct_damaging_move(False,"rock",22,"boulder toss"),
         "shadow strike": construct_damaging_move(False,"dark",20,"shadow strike"),
+        "waterfall": construct_damaging_move(False,"water",22,"waterfall"),
+        "phantom slice": construct_damaging_move(False,"ghost",20,"phantom slice"),
+        "vine whip": construct_damaging_move(False,"grass",20,"vine whip"),
+        "rebound": Move(rebound,"normal"),
+        "telekinesis": construct_damaging_move(False,"psychic",20,"telekinesis"),
         "pilebunker": Move(pilebunker,"fighting",prioritycallback=pilebunker_PCB),
         "dragon fang": construct_damaging_move(False,"dragon",23,"dragon fang"),
         "rampage": Move(rampage,"dragon"),
