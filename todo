@@ -1,9 +1,6 @@
-grass type
-normal type
-
 trainer names
-see fainted pokemon
-see opposing pokemon
 "clean up code" whatever that means
 refactor all code into appropriate files rather than 2 big files
+better error handling
+better way of processing json
 

@@ -89,6 +89,9 @@ class Status:
     def turnendcallback(self):
         pass
 
+    def preturnendcallback(self):
+        pass
+
     def remove(self):
         self.mon.remove_status(self)
 
@@ -547,6 +550,76 @@ def entwinefate(user,target):
             return
     user.get_activemon().add_status(FateStatus(user.get_activemon()))
 
+def gigadrain(user,target):
+    dmg = damage_dealing_move(user,target,True,"grass",20,"giga drain")
+    if dmg:
+        user.log(user.get_activemon().get_name()+" restored its health!")
+        user.get_activemon().health = min(100,user.get_activemon().health + max(1,int(dmg/3)))
+
+def roots(user,target):
+    user.log(user.get_activemon().get_name()+" used entangling roots!")
+    class RootStatus(Status):
+        def __init__(self,mon):
+            Status.__init__(self,mon,"entangling roots")
+            self.turnsused = 0
+        def movevalidcallback(self,isMove,choice):
+            return isMove
+        def turnendcallback(self):
+            self.turnsused += 1
+            if self.turnsused == 2:
+                self.name = "loose roots"
+            if self.turnsused == 3:
+                self.remove()
+    target.get_activemon().add_status(RootStatus(target.get_activemon()))
+
+def leechseed(user,target):
+    user.log(user.get_activemon().get_name()+" used leech seed!")
+    if not target.get_activemon():
+        return
+    for status in target.get_activemon().status:
+        if status.name == "leech seed":
+            return
+    class SeedStatus(Status):
+        def preturnendcallback(self):
+            target = self.mon.side.otherside.get_activemon()
+            if self.mon and target:
+                target.log(target.get_name()+" was drained by leech seed!")
+                dmg = min(10,target.health)
+                target.take_damage(dmg)
+                self.mon.health = min(100,self.mon.health + max(1,dmg))
+    target.get_activemon().add_status(SeedStatus(target.get_activemon(),"leech seed"))
+
+def spore(user,target):
+    user.log(user.get_activemon().get_name()+" used spore!")
+    if not target.get_activemon():
+        return
+    for effect in target.fieldeffects:
+        if " is asleep" in effect.get_str():
+            return
+    class SleepStatus(Status):
+        def __init__(self,mon):
+            Status.__init__(self,mon,"asleep")
+            self.turnsasleep = 0
+        def switchedoutcallback(self):
+            pass
+        def abouttousemovecallback(self):
+            if not self.mon.side.action[0]:
+                return
+            self.turnsasleep += 1
+            if self.turnsasleep == 3:
+                self.remove()
+                self.mon.log(self.mon.get_name()+" woke up!")
+                for effect in self.mon.side.fieldeffects:
+                    if " is asleep" in effect.get_str():
+                        effect.remove()
+                        return False
+                self.mon.log("something went wrong")
+            self.mon.log(self.mon.get_name()+" is fast asleep!")
+            return True
+    target.get_activemon().add_status(SleepStatus(target.get_activemon()))
+    target.add_effect(FieldEffect(target,target.get_activemon().get_name()+" is asleep"))
+
+
 moves = {
         "facepunch": construct_damaging_move(False,"fighting",25,"facepunch"),
         "falcon punch": construct_damaging_move(False,"fire",20,"falcon punch"),
@@ -588,4 +661,8 @@ moves = {
         "rite of power": Move(powerrite,"ghost"),
         "entwine fate": Move(entwinefate,"ghost"),
         "hex": construct_damaging_move(True,"ghost",22,"hex"),
+        "giga drain": Move(gigadrain,"grass"),
+        "entangling roots": Move(roots,"grass"),
+        "leech seed": Move(leechseed,"grass"),
+        "spore": Move(spore,"grass"),
         }

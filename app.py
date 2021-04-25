@@ -106,7 +106,8 @@ class Mon():
             callback.turnendcallback()
 
     def pre_turn_ended(self):
-        pass
+        for callback in [i for i in self.status]:
+            callback.preturnendcallback()
 
     def fainted(self):
         callbacks = [i for i in self.status]
