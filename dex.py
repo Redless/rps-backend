@@ -306,10 +306,10 @@ def brainwash(user,target):
             Status.remove(self)
             self.mon.types = self.oldtypes
     target.add_status(BrainwashStatus(target))
-    target.get_activemon().spaboosts -= 1
-    target.get_activemon().atkboosts -= 1
-    user.log(target.get_activemon().get_name()+"'s attack fell!")
-    user.log(target.get_activemon().get_name()+"'s special attack fell!")
+    target.spaboosts -= 1
+    target.atkboosts -= 1
+    user.log(target.get_name()+"'s attack fell!")
+    user.log(target.get_name()+"'s special attack fell!")
 
 def plusonepriority(user):
     return 1000

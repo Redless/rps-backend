@@ -28,6 +28,7 @@ class Mon():
         self.moves = json["moves"]
         for move in self.moves:
             if move not in moves:
+                print(move)
                 1/0
         self.side = side
         self.status = [] 
