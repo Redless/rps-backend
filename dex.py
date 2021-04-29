@@ -311,6 +311,9 @@ def brainwash(user,target):
     user.log(target.get_activemon().get_name()+"'s attack fell!")
     user.log(target.get_activemon().get_name()+"'s special attack fell!")
 
+def plusonepriority(user):
+    return 1000
+
 def resonate(user,target):
     if "psychic" in target.get_activemon().types:
         damage_dealing_move(user,target,True,"psychic",72,"resonate")
@@ -635,7 +638,6 @@ moves = {
         "phantom slice": construct_damaging_move(False,"ghost",20,"phantom slice"),
         "vine whip": construct_damaging_move(False,"grass",20,"vine whip"),
         "rebound": Move(rebound,"normal"),
-        "telekinesis": construct_damaging_move(False,"psychic",20,"telekinesis"),
         "pilebunker": Move(pilebunker,"fighting",prioritycallback=pilebunker_PCB),
         "dragon fang": construct_damaging_move(False,"dragon",23,"dragon fang"),
         "rampage": Move(rampage,"dragon"),
@@ -649,7 +651,7 @@ moves = {
         "mind break": construct_damaging_move(True,"psychic",22,"mind break"),
         "reckless descent": Move(recklessdescent,"flying"),
         "rivalry": Move(rivalry,"dark"),
-        "brainwash": Move(brainwash,"psychic"),
+        "brainwash": Move(brainwash,"psychic",prioritycallback=plusonepriority),
         "resonate": Move(resonate,"psychic"),
         "visions of disaster": Move(disastervision,"psychic"),
         "death dance": Move(deathdance,"dark"),
