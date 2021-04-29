@@ -53,7 +53,7 @@ def damage_dealing_move(user,target,isSpecial,movetype,movepower,movename):
         damage = max(int(user.get_spa()*movepower*typeAdv/target.get_spd()),1)
     else:
         damage = max(int(user.get_atk()*movepower*typeAdv/target.get_dfn()),1)
-    user.side.room.log(target.get_name()+" took "+str(damage)+" percent!")
+    user.side.room.log(target.get_name()+" took "+str(damage/4)+" percent!")
     target.take_damage(damage)
     target.took_direct_damage(damage)
     return damage
