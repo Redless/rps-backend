@@ -592,10 +592,10 @@ def leechseed(user,target):
         def preturnendcallback(self):
             target = self.mon.side.otherside.get_activemon()
             if self.mon and target:
-                target.log(target.get_name()+" was drained by leech seed!")
-                dmg = min(10,target.health)
-                target.take_damage(dmg)
-                self.mon.health = min(100,self.mon.health + max(1,dmg))
+                target.log(self.mon.get_name()+" was drained by leech seed!")
+                dmg = min(10,self.mon.health)
+                self.mon.take_damage(dmg)
+                target.health = min(100,target.health + dmg)
     target.get_activemon().add_status(SeedStatus(target.get_activemon(),"leech seed"))
 
 def spore(user,target):

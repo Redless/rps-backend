@@ -123,6 +123,7 @@ class Mon():
         self.spaboosts = 0
         self.dfnboosts = 0
         self.spdboosts = 0
+        self.speboosts = 0
 
     def switched_in(self):
         self.seen = True
