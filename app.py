@@ -24,7 +24,7 @@ class Mon():
         self.spdboosts = 0
         self.speboosts = 0
         self.types = self.species["types"]
-        self.health = 100
+        self.health = 400
         self.moves = json["moves"]
         for move in self.moves:
             if move not in moves:

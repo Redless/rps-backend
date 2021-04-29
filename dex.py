@@ -156,7 +156,7 @@ def construct_damaging_move(isSpecial,movetype,BP,name):
     return Move(lambda x, y: damage_dealing_move(x,y,isSpecial,movetype,BP,name),movetype)
 
 def pilebunker(user,target):
-    damage_dealing_move(user,target,False,"fighting",40,"pilebunker")
+    damage_dealing_move(user,target,False,"fighting",160,"pilebunker")
 
 def pilebunker_PCB(user):
     mon = user.get_activemon()
@@ -179,7 +179,7 @@ def rampage(user,target):
     victim = target.get_activemon()
     if not victim:
         return
-    damage_dealing_move(user,target,False,"dragon",38,"rampage")
+    damage_dealing_move(user,target,False,"dragon",152,"rampage")
     if victim.is_fainted():
         victim.log(user.get_activemon().get_name()+" is tired out from its rampage!")
         class RechargeStatus(Status):
@@ -209,7 +209,7 @@ def retreat(user,target):
         user.await_move()
 
 def pilotlight(user,target):
-    dmg = damage_dealing_move(user,target,True,"fire",5,"pilot light")
+    dmg = damage_dealing_move(user,target,True,"fire",20,"pilot light")
     if dmg:
         user.log(user.get_activemon().get_name()+" is getting fired up!")
         class LitStatus(Status):
@@ -259,7 +259,7 @@ def tsunamiwarning(user,target):
             user.side.room.log("It's not very effective...")
         if typeAdv > 1:
             user.side.room.log("It's super effective!")
-        damage = max(int(spa*35*STAB*dmgmod*dmgmod2*typeAdv/target.get_spd()),1)
+        damage = max(int(spa*140*STAB*dmgmod*dmgmod2*typeAdv/target.get_spd()),1)
         target.log(target.get_name()+" took "+str(damage)+" percent!")
         target.take_damage(damage)
     class TsunamiEffect(FieldEffect):
@@ -287,7 +287,7 @@ def tsunamiwarning(user,target):
     user.side.add_effect(TsunamiEffect(user.side))
 
 def recklessdescent(user,target):
-    dmg = damage_dealing_move(user,target,False,"flying",35,"reckless descent")
+    dmg = damage_dealing_move(user,target,False,"flying",140,"reckless descent")
     if dmg:
         recoil = max(dmg//3,1)
         user.log(user.get_activemon().get_name()+" took "+str(recoil)+" percent recoil!")
@@ -318,9 +318,9 @@ def plusonepriority(user):
 
 def resonate(user,target):
     if "psychic" in target.get_activemon().types:
-        damage_dealing_move(user,target,True,"psychic",72,"resonate")
+        damage_dealing_move(user,target,True,"psychic",288,"resonate")
     else:
-        damage_dealing_move(user,target,True,"psychic",18,"resonate")
+        damage_dealing_move(user,target,True,"psychic",72,"resonate")
 
 def rivalry(user,target):
     user.log(user.get_activemon().get_name()+" used rivalry!")
@@ -369,7 +369,7 @@ def deathdance(user,target):
             self.count -= 1
             self.mon.log(self.mon.get_name()+"'s perish count fell to "+str(self.count)+"!")
             if self.count == 0:
-                self.mon.take_damage(100)
+                self.mon.take_damage(400)
     alreadyPerishing = False
     for status in user.get_activemon().status:
         if "perish count: " in status.get_str():
@@ -407,9 +407,9 @@ def ambush(user,target):
     for effect in target.fieldeffects:
         if effect.get_str() == "ambush prepped":
             if effect.sprung:
-                damage_dealing_move(user,target,False,"dark",45,"ambush")
+                damage_dealing_move(user,target,False,"dark",180,"ambush")
             else:
-                damage_dealing_move(user,target,False,"dark",15,"ambush")
+                damage_dealing_move(user,target,False,"dark",60,"ambush")
             return
                 
     print("something went wrong with ambush")
@@ -433,7 +433,7 @@ def lastword(user,target,onSwitch=False):
             if effect.pursued:
                 return
             effect.pursued = True
-            damage_dealing_move(user,target,False,"dark",20 if onSwitch else 10,"last word")
+            damage_dealing_move(user,target,False,"dark",80 if onSwitch else 40,"last word")
             return
     print("something went wrong with lastword")
 
@@ -452,12 +452,12 @@ def lastword_PCB(user):
     return 0
 
 def rocksplosion(user,target):
-    dmg = damage_dealing_move(user,target,False,"rock",60,"rocksplosion")
+    dmg = damage_dealing_move(user,target,False,"rock",240,"rocksplosion")
     user.log(user.get_activemon().get_name()+" exploded!")
-    user.get_activemon().take_damage(100)
+    user.get_activemon().take_damage(400)
 
 def bonecrushtackle(user,target):
-    dmg = damage_dealing_move(user,target,False,"rock",10,"bonecrush tackle")
+    dmg = damage_dealing_move(user,target,False,"rock",40,"bonecrush tackle")
     if dmg:
         class BonecrushedStatus(Status):
             def __init__(self,mon):
@@ -481,7 +481,7 @@ def boneshardscatter(user,target):
     class BoneshardEffect(FieldEffect):
         def switchedincallback(self):
             mon = self.side.get_activemon()
-            typeAdv = 12
+            typeAdv = 50
             for x in mon.types:
                 typeAdv *= typematchup[typekey["rock"]][typekey[x]]
             mon.log("Pointed stones dug into "+mon.get_name())
@@ -491,12 +491,12 @@ def boneshardscatter(user,target):
     target.add_effect(BoneshardEffect(target,"boneshards"))
 
 def selfdestruct(user,target):
-    dmg = damage_dealing_move(user,target,False,"normal",60,"selfdestruct")
+    dmg = damage_dealing_move(user,target,False,"normal",240,"selfdestruct")
     user.log(user.get_activemon().get_name()+" exploded!")
-    user.get_activemon().take_damage(100)
+    user.get_activemon().take_damage(400)
 
 def draconicbombardment(user,target):
-    dmg = damage_dealing_move(user,target,True,"dragon",34,"draconic bombardment")
+    dmg = damage_dealing_move(user,target,True,"dragon",136,"draconic bombardment")
     if dmg:
         user.log(user.get_activemon().get_name()+"'s special attack harshly fell!")
         user.get_activemon().spaboosts -= 2
@@ -507,14 +507,14 @@ def amplification(user,target):
     user.get_activemon().spaboosts += 2
 
 def secureperimeter(user,target):
-    dmg = damage_dealing_move(user,target,False,"normal",5,"secure perimeter")
+    dmg = damage_dealing_move(user,target,False,"normal",20,"secure perimeter")
     if dmg:
         user.log(user.get_activemon().get_name()+" secured the perimeter!")
         for callback in [i for i in user.fieldeffects]:
             callback.hazardclearcallback()
 
 def rebound(user,target):
-    dmg = damage_dealing_move(user,target,False,"normal",16,"rebound")
+    dmg = damage_dealing_move(user,target,False,"normal",64,"rebound")
     if dmg:
         user.log(user.get_activemon().get_name()+" bounced away!")
         if user.get_num_living() == 1:
@@ -533,7 +533,7 @@ def powerrite(user,target):
     user.log(user.get_activemon().get_name()+" cut its HP!")
     user.get_activemon().spaboosts += 2
     user.get_activemon().speboosts += 2
-    user.get_activemon().take_damage(40)
+    user.get_activemon().take_damage(160)
 
 def entwinefate(user,target):
     user.log(user.get_activemon().get_name()+" used entwine fate!")
@@ -548,7 +548,7 @@ def entwinefate(user,target):
                 deadnow = self.mon.side.otherside.get_activemon()
                 if deadnow:
                     self.mon.log("It seems their fates were joined...")
-                    deadnow.take_damage(100)
+                    deadnow.take_damage(400)
         def turnendcallback(self):
             if self.used:
                 self.remove()
@@ -562,10 +562,10 @@ def entwinefate(user,target):
     user.get_activemon().add_status(FateStatus(user.get_activemon()))
 
 def gigadrain(user,target):
-    dmg = damage_dealing_move(user,target,True,"grass",20,"giga drain")
+    dmg = damage_dealing_move(user,target,True,"grass",80,"giga drain")
     if dmg:
         user.log(user.get_activemon().get_name()+" restored its health!")
-        user.get_activemon().health = min(100,user.get_activemon().health + max(1,int(dmg/3)))
+        user.get_activemon().health = min(400,user.get_activemon().health + max(1,int(dmg/3)))
 
 def roots(user,target):
     user.log(user.get_activemon().get_name()+" used entangling roots!")
@@ -595,9 +595,9 @@ def leechseed(user,target):
             target = self.mon.side.otherside.get_activemon()
             if self.mon and target:
                 target.log(self.mon.get_name()+" was drained by leech seed!")
-                dmg = min(10,self.mon.health)
+                dmg = min(40,self.mon.health)
                 self.mon.take_damage(dmg)
-                target.health = min(100,target.health + dmg)
+                target.health = min(400,target.health + dmg)
     target.get_activemon().add_status(SeedStatus(target.get_activemon(),"leech seed"))
 
 def spore(user,target):
@@ -634,25 +634,25 @@ def spore(user,target):
 
 
 moves = {
-        "facepunch": construct_damaging_move(False,"fighting",25,"facepunch"),
-        "falcon punch": construct_damaging_move(False,"fire",20,"falcon punch"),
-        "boulder toss": construct_damaging_move(False,"rock",22,"boulder toss"),
-        "shadow strike": construct_damaging_move(False,"dark",20,"shadow strike"),
-        "waterfall": construct_damaging_move(False,"water",22,"waterfall"),
-        "phantom slice": construct_damaging_move(False,"ghost",20,"phantom slice"),
-        "vine whip": construct_damaging_move(False,"grass",20,"vine whip"),
+        "facepunch": construct_damaging_move(False,"fighting",100,"facepunch"),
+        "falcon punch": construct_damaging_move(False,"fire",80,"falcon punch"),
+        "boulder toss": construct_damaging_move(False,"rock",88,"boulder toss"),
+        "shadow strike": construct_damaging_move(False,"dark",80,"shadow strike"),
+        "waterfall": construct_damaging_move(False,"water",88,"waterfall"),
+        "phantom slice": construct_damaging_move(False,"ghost",80,"phantom slice"),
+        "vine whip": construct_damaging_move(False,"grass",80,"vine whip"),
         "rebound": Move(rebound,"normal"),
         "pilebunker": Move(pilebunker,"fighting",prioritycallback=pilebunker_PCB),
-        "dragon fang": construct_damaging_move(False,"dragon",23,"dragon fang"),
+        "dragon fang": construct_damaging_move(False,"dragon",92,"dragon fang"),
         "rampage": Move(rampage,"dragon"),
-        "fire breath": construct_damaging_move(True,"fire",24,"fire breath"),
-        "skydive": construct_damaging_move(False,"flying",20,"skydive"),
-        "smoldering jaws": construct_damaging_move(False,"fire",24,"smoldering jaws"),
+        "fire breath": construct_damaging_move(True,"fire",96,"fire breath"),
+        "skydive": construct_damaging_move(False,"flying",80,"skydive"),
+        "smoldering jaws": construct_damaging_move(False,"fire",96,"smoldering jaws"),
         "retreat": Move(retreat,"normal"),
         "pilot light": Move(pilotlight,"fire"),
         "tsunami warning": Move(tsunamiwarning,"water"),
-        "wave call": construct_damaging_move(True,"water",20,"wave call"),
-        "mind break": construct_damaging_move(True,"psychic",22,"mind break"),
+        "wave call": construct_damaging_move(True,"water",80,"wave call"),
+        "mind break": construct_damaging_move(True,"psychic",88,"mind break"),
         "reckless descent": Move(recklessdescent,"flying"),
         "rivalry": Move(rivalry,"dark"),
         "brainwash": Move(brainwash,"psychic",prioritycallback=plusonepriority),
@@ -665,14 +665,14 @@ moves = {
         "rocksplosion": Move(rocksplosion,"rock"),
         "boneshard scatter": Move(boneshardscatter,"rock"),
         "bonecrush tackle": Move(bonecrushtackle,"rock"),
-        "metal ion laser": construct_damaging_move(True,"steel",23,"metal ion laser"),
+        "metal ion laser": construct_damaging_move(True,"steel",92,"metal ion laser"),
         "draconic bombardment": Move(draconicbombardment,"dragon"),
         "amplification": Move(amplification,"steel"),
         "secure perimeter": Move(secureperimeter,"normal"),
         "selfdestruct": Move(selfdestruct,"normal"),
         "rite of power": Move(powerrite,"ghost"),
         "entwine fate": Move(entwinefate,"ghost"),
-        "hex": construct_damaging_move(True,"ghost",22,"hex"),
+        "hex": construct_damaging_move(True,"ghost",88,"hex"),
         "giga drain": Move(gigadrain,"grass"),
         "entangling roots": Move(roots,"grass"),
         "leech seed": Move(leechseed,"grass"),
