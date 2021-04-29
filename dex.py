@@ -15,16 +15,16 @@ species = {
 
 typekey = {"normal":0,"fighting":1,"flying":2,"rock":3,"steel":4,"dragon":5,"fire":6,"water":7,"grass":8,"psychic":9,"ghost":10,"dark":11}
 typematchup = [[ 1, 1, 1,.5,.5, 1, 1, 1, 1, 1, 0, 1], #normal #offensive type THEN defensive type order..
-               [ 2, 1,.5, 2, 2, 1, 1, 1, 1,.5, 0, 2], #fighting
+               [ 1, 1,.5, 2, 2, 1, 1, 1, 1,.5, 0, 2], #fighting
                [ 1, 2, 1,.5,.5, 1, 1, 1, 2, 1, 1, 1], #flying
-               [ 1,.5, 2, 1,.5, 1, 2, 1, 1, 1, 1, 1], #rock
-               [ 1, 1, 1, 2,.5, 1,.5,.5, 1, 1, 1, 1], #steel
+               [ 1,.5, 2, 1,.5, 2, 2, 1, 1, 1, 1, 1], #rock
+               [ 1, 1, 1, 2,.5, 1,.5,.5, 2, 1, 1, 1], #steel
                [ 1, 1, 1, 1,.5, 2, 1, 1, 1, 1, 1, 1], #dragon
                [ 1, 1, 1,.5, 2,.5,.5,.5, 2, 1, 1, 1], #fire
-               [ 1, 1, 1, 2, 1,.5, 2,.5,.5, 1, 1, 1], #water
-               [ 1, 1, 1, 2,.5,.5,.5, 2,.5, 1, 1, 1], #grass
-               [ 1, 2, 1, 1,.5, 2, 1, 2, 1,.5, 1, 0], #psychic
-               [ 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2,.5], #ghost
+               [ 1, 1, 1, 2, 1, 1, 2,.5,.5, 1, 1, 1], #water
+               [ 1, 1,.5, 2,.5,.5,.5, 2,.5, 1, 1, 1], #grass
+               [ 1, 2, 1, 1,.5, 1, 1, 1, 1,.5, 1, 0], #psychic
+               [ 0, 1, 1, 1, 1, 1, 1, 2, 1, 2, 1,.5], #ghost
                [ 1,.5, 1, 1, 1, 1, 1, 1, 1, 2, 2,.5]] #dark
 
 def damage_dealing_move(user,target,isSpecial,movetype,movepower,movename):
@@ -306,6 +306,10 @@ def brainwash(user,target):
             Status.remove(self)
             self.mon.types = self.oldtypes
     target.add_status(BrainwashStatus(target))
+    target.get_activemon().spaboosts -= 1
+    target.get_activemon().atkboosts -= 1
+    user.log(target.get_activemon().get_name()+"'s attack fell!")
+    user.log(target.get_activemon().get_name()+"'s special attack fell!")
 
 def resonate(user,target):
     if "psychic" in target.get_activemon().types:
@@ -342,9 +346,11 @@ def disastervision(user,target):
     mon.spdboosts += 1
     mon.dfnboosts += 1
     mon.speboosts -= 2
+    mon.spaboosts += 1
     user.log(user.get_activemon().get_name()+"'s defense rose!")
     user.log(user.get_activemon().get_name()+"'s special defense rose!")
     user.log(user.get_activemon().get_name()+"'s speed harshly fell!")
+    user.log(user.get_activemon().get_name()+"'s special attack rose!")
 
 def deathdance(user,target):
     user.log(user.get_activemon().get_name()+" used death dance!")
