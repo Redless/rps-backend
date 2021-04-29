@@ -20,7 +20,7 @@ typematchup = [[ 1, 1, 1,.5,.5, 1, 1, 1, 1, 1, 0, 1], #normal #offensive type TH
                [ 1,.5, 2, 1,.5, 2, 2, 1, 1, 1, 1, 1], #rock
                [ 1, 1, 1, 2,.5, 1,.5,.5, 2, 1, 1, 1], #steel
                [ 1, 1, 1, 1,.5, 2, 1, 1, 1, 1, 1, 1], #dragon
-               [ 1, 1, 1,.5, 2,.5,.5,.5, 2, 1, 1, 1], #fire
+               [ 1, 1, 1,.5, 2,.5,.5,.5, 2, 1, 1, 2], #fire
                [ 1, 1, 1, 2, 1, 1, 2,.5,.5, 1, 1, 1], #water
                [ 1, 1,.5, 2,.5,.5,.5, 2,.5, 1, 1, 1], #grass
                [ 1, 2, 1, 1,.5, 1, 1, 1, 1,.5, 1, 0], #psychic
@@ -177,6 +177,8 @@ def pilebunker_PCB(user):
 
 def rampage(user,target):
     victim = target.get_activemon()
+    if not victim:
+        return
     damage_dealing_move(user,target,False,"dragon",38,"rampage")
     if victim.is_fainted():
         victim.log(user.get_activemon().get_name()+" is tired out from its rampage!")
