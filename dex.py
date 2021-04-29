@@ -23,8 +23,8 @@ typematchup = [[ 1, 1, 1,.5,.5, 1, 1, 1, 1, 1, 0, 1], #normal #offensive type TH
                [ 1, 1, 1,.5, 2,.5,.5,.5, 2, 1, 1, 2], #fire
                [ 1, 1, 1, 2, 1, 1, 2,.5,.5, 1, 1, 1], #water
                [ 1, 1,.5, 2,.5,.5,.5, 2,.5, 1, 1, 1], #grass
-               [ 1, 2, 1, 1,.5, 1, 1, 1, 1,.5, 1, 0], #psychic
-               [ 0, 1, 1, 1, 1, 1, 1, 2, 1, 2, 1,.5], #ghost
+               [ 2, 2, 1, 1,.5, 1, 1, 1, 1,.5, 1, 0], #psychic
+               [ 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1,.5], #ghost
                [ 1,.5, 1, 1, 1, 1, 1, 1, 1, 2, 2,.5]] #dark
 
 def damage_dealing_move(user,target,isSpecial,movetype,movepower,movename):
@@ -620,13 +620,15 @@ def spore(user,target):
             if self.turnsasleep == 3:
                 self.remove()
                 self.mon.log(self.mon.get_name()+" woke up!")
-                for effect in self.mon.side.fieldeffects:
-                    if " is asleep" in effect.get_str():
-                        effect.remove()
-                        return False
-                self.mon.log("something went wrong")
+                return False
             self.mon.log(self.mon.get_name()+" is fast asleep!")
             return True
+        def remove(self):
+            Status.remove(self)
+            for effect in self.mon.side.fieldeffects:
+                if " is asleep" in effect.get_str():
+                    effect.remove()
+                    return False
     target.get_activemon().add_status(SleepStatus(target.get_activemon()))
     target.add_effect(FieldEffect(target,target.get_activemon().get_name()+" is asleep"))
 
